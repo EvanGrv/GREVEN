@@ -8,6 +8,36 @@
   overflow: hidden;
 }
 
+/* Subtle top & bottom vignette so the chrome stays legible over the network,
+   without darkening the luminous centre. */
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 28vh;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(24, 24, 18, 0.6), transparent);
+}
+
+.hero::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(24, 24, 18, 0.6), transparent);
+}
+
+.topRow,
+.center,
+.footerRow {
+  position: relative;
+  z-index: 2;
+}
+
 .topRow {
   display: flex;
   justify-content: space-between;
@@ -21,22 +51,44 @@
   justify-content: center;
 }
 
-/* Placeholder luminance for the neural network slot, replaced by WebGL. */
-.networkGlow {
+/* Soft, blurred scrim directly behind the wordmark to guarantee legibility
+   over the moving network — fades out so branches remain visible around it. */
+.scrim {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: clamp(140px, 26vw, 340px);
-  height: clamp(140px, 26vw, 340px);
-  border-radius: 50%;
+  width: min(92vw, 1150px);
+  height: min(52vh, 400px);
   pointer-events: none;
   background: radial-gradient(
-    circle,
-    rgba(242, 208, 167, 0.16),
-    rgba(101, 55, 31, 0.07) 45%,
-    transparent 70%
+    ellipse at center,
+    rgba(28, 28, 21, 0.74),
+    rgba(28, 28, 21, 0.34) 46%,
+    transparent 72%
   );
+  filter: blur(24px);
+}
+
+/* Discrete section kanji, echoing the mockup's corners. Very low presence.
+   Descendant selectors raise specificity over the Kanji component defaults. */
+.hero .kanjiLeft,
+.hero .kanjiRight {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  color: var(--color-warm-stone);
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.hero .kanjiLeft {
+  left: var(--page-margin);
+}
+
+.hero .kanjiRight {
+  right: var(--page-margin);
 }
 
 .footerRow {
@@ -66,6 +118,20 @@
   width: 1px;
   height: 44px;
   background: linear-gradient(to bottom, var(--color-warm-stone), transparent);
+  animation: scrollPulse 2.4s var(--ease-editorial) infinite;
+  transform-origin: top;
+}
+
+@keyframes scrollPulse {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
 }
 
 .kanjiRow {
@@ -76,6 +142,11 @@
 }
 
 @media (max-width: 720px) {
+  .kanjiLeft,
+  .kanjiRight {
+    display: none;
+  }
+
   .scrollHint {
     display: none;
   }
@@ -83,5 +154,11 @@
   .kanjiRow {
     font-size: var(--fs-small);
     letter-spacing: 0.35em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrollLine {
+    animation: none;
   }
 }
