@@ -37,9 +37,11 @@
   --accent-highlight: var(--color-tucson-tan);
 
   /* --- Typography --- */
-  --font-serif: var(--font-noto-serif-jp), 'Times New Roman', serif;
+  /* High-contrast display serif for GREVEN + Latin headings. */
+  --font-serif: var(--font-playfair), var(--font-noto-serif-jp), 'Georgia', serif;
   --font-sans: var(--font-inter), var(--font-noto-sans-jp), system-ui, sans-serif;
-  --font-jp: var(--font-noto-sans-jp), var(--font-noto-serif-jp), sans-serif;
+  /* Japanese glyphs (kanji). */
+  --font-jp: var(--font-noto-serif-jp), var(--font-noto-sans-jp), serif;
 
   --fs-display: clamp(4rem, 16vw, 15rem);
   --fs-h1: clamp(2.25rem, 5vw, 3.5rem);

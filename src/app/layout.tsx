@@ -1,8 +1,18 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Noto_Sans_JP, Noto_Serif_JP } from 'next/font/google';
+import { Inter, Noto_Sans_JP, Noto_Serif_JP, Playfair_Display } from 'next/font/google';
 import { NeuralBackdrop } from '@/scenes/NeuralCanvas/NeuralBackdrop';
 import '@/styles/globals.css';
 
+// High-contrast display serif for the GREVEN wordmark and Latin headings.
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-playfair',
+  display: 'swap',
+});
+
+// Kept for Japanese glyphs (kanji headings).
 const notoSerifJp = Noto_Serif_JP({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
@@ -66,7 +76,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${notoSerifJp.variable} ${notoSansJp.variable} ${inter.variable}`}>
+    <html
+      lang="fr"
+      className={`${playfair.variable} ${notoSerifJp.variable} ${notoSansJp.variable} ${inter.variable}`}
+    >
       <body>
         <a href="#content" className="sr-only">
           Aller au contenu principal

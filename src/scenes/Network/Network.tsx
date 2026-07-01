@@ -23,7 +23,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
   const reducedMotion = useSceneStore((s) => s.reducedMotion);
   const model = useMemo(() => generateNetwork(quality), [quality]);
   const counts = countsFor(quality);
-  const detail = quality === 'high' ? 3 : quality === 'medium' ? 2 : 1;
+  const detail = quality === 'high' ? 4 : quality === 'medium' ? 3 : 2;
 
   // Index lists per kind (nav neurons are always the first nodes).
   const { navIdx, neuronIdx, synapseIdx } = useMemo(() => {
@@ -227,8 +227,8 @@ export function Network({ quality }: { quality: QualityLevel }) {
           <meshStandardMaterial
             color={NETWORK_CONFIG.palette.navNeuron}
             emissive={NETWORK_CONFIG.palette.emissive}
-            emissiveIntensity={0.32}
-            roughness={0.62}
+            emissiveIntensity={0.55}
+            roughness={0.55}
             metalness={0}
           />
         </mesh>
@@ -240,8 +240,8 @@ export function Network({ quality }: { quality: QualityLevel }) {
         <meshStandardMaterial
           color={NETWORK_CONFIG.palette.neuron}
           emissive={NETWORK_CONFIG.palette.emissive}
-          emissiveIntensity={0.16}
-          roughness={0.82}
+          emissiveIntensity={0.24}
+          roughness={0.78}
           metalness={0}
         />
       </instancedMesh>
@@ -252,8 +252,8 @@ export function Network({ quality }: { quality: QualityLevel }) {
         <meshStandardMaterial
           color={NETWORK_CONFIG.palette.synapse}
           emissive={NETWORK_CONFIG.palette.emissive}
-          emissiveIntensity={0.1}
-          roughness={0.9}
+          emissiveIntensity={0.16}
+          roughness={0.88}
           metalness={0}
         />
       </instancedMesh>
