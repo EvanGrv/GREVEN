@@ -3,7 +3,7 @@
 import { Canvas } from '@react-three/fiber';
 import { SceneLighting } from '@/scenes/SceneLighting/SceneLighting';
 import { CameraRig } from '@/scenes/CameraRig/CameraRig';
-import { Neurons } from '@/scenes/Neuron/Neurons';
+import { Network } from '@/scenes/Network/Network';
 import { usePointerParallax } from '@/hooks/usePointerParallax';
 import { maxDprFor } from '@/lib/device-detect';
 import type { QualityLevel } from '@/stores/sceneStore';
@@ -31,7 +31,7 @@ export default function NeuralScene({ quality }: { quality: QualityLevel }) {
       <fog attach="fog" args={['#24261e', 8, 22]} />
       <SceneLighting />
       <CameraRig />
-      <Neurons quality={quality} />
+      <Network quality={quality} />
     </Canvas>
   );
 }
