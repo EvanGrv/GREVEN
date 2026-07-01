@@ -1,0 +1,85 @@
+/**
+ * GREVEN design tokens.
+ * Single source of truth for colour, type scale, spacing and motion.
+ * Consumed by globals.css and every CSS Module via var(--token).
+ */
+
+:root {
+  /* --- Palette: primaries --- */
+  --color-eerie-black: #282119;
+  --color-deep-olive: #24261e;
+  --color-moss-grey: #3d4034;
+  --color-warm-stone: #736b5c;
+  --color-pearl: #f2d0a7;
+
+  /* --- Palette: secondaries (use sparingly) --- */
+  --color-seal-brown: #65371f;
+  --color-rich-crimson: #321d1c;
+  --color-velvet-plum: #785c59;
+  --color-cafe-ole: #9a817a;
+  --color-allspice: #cbaaa2;
+  --color-tucson-tan: #e5be9e;
+
+  /* --- Semantic roles --- */
+  --bg-base: var(--color-deep-olive);
+  --bg-deep: var(--color-eerie-black);
+  --bg-elevated: #2c2a20;
+  --surface: var(--color-moss-grey);
+  --border-subtle: rgba(115, 107, 92, 0.22);
+  --border-strong: rgba(115, 107, 92, 0.4);
+
+  --text-primary: var(--color-pearl);
+  --text-secondary: rgba(203, 170, 162, 0.72);
+  --text-muted: rgba(154, 129, 122, 0.62);
+  --text-on-pearl: var(--color-eerie-black);
+
+  --accent-warm: var(--color-seal-brown);
+  --accent-highlight: var(--color-tucson-tan);
+
+  /* --- Typography --- */
+  --font-serif: var(--font-noto-serif-jp), 'Times New Roman', serif;
+  --font-sans: var(--font-inter), var(--font-noto-sans-jp), system-ui, sans-serif;
+  --font-jp: var(--font-noto-sans-jp), var(--font-noto-serif-jp), sans-serif;
+
+  --fs-display: clamp(4rem, 16vw, 15rem);
+  --fs-h1: clamp(2.25rem, 5vw, 3.5rem);
+  --fs-h2: clamp(1.5rem, 3vw, 2.25rem);
+  --fs-h3: 1.25rem;
+  --fs-body: 1rem;
+  --fs-small: 0.8125rem;
+  --fs-eyebrow: 0.6875rem;
+
+  --tracking-eyebrow: 0.28em;
+  --tracking-title: 0.02em;
+  --leading-tight: 1.05;
+  --leading-body: 1.65;
+
+  /* --- Spacing scale --- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  --page-margin: clamp(1.25rem, 4vw, 3.5rem);
+  --grid-columns: 12;
+  --grid-gutter: clamp(1rem, 2vw, 1.75rem);
+
+  /* --- Motion --- */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-editorial: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 240ms;
+  --dur-medium: 420ms;
+  --dur-slow: 900ms;
+
+  /* --- Elevation / z-index --- */
+  --z-canvas: 0;
+  --z-content: 10;
+  --z-nav: 40;
+  --z-overlay: 60;
+  --z-cursor: 80;
+}

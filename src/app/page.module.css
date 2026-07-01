@@ -1,0 +1,119 @@
+.hero {
+  position: relative;
+  min-height: 100dvh;
+  padding: var(--page-margin);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-6);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.wordmark {
+  font-family: var(--font-serif);
+  font-size: var(--fs-h3);
+  letter-spacing: 0.32em;
+  color: var(--text-primary);
+}
+
+.tagline {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: right;
+}
+
+.navLink {
+  font-size: var(--fs-small);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.navLink:hover {
+  color: var(--text-primary);
+}
+
+.title {
+  align-self: center;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: clamp(3rem, 12vw, 12rem);
+  font-family: var(--font-serif);
+  font-size: var(--fs-display);
+  font-weight: 500;
+  letter-spacing: var(--tracking-title);
+  color: var(--text-primary);
+  line-height: 1;
+  /* The gap between GRE and VEN is where the neural network will live. */
+}
+
+/* Placeholder mark for the neural network, replaced by the WebGL scene. */
+.networkSlot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(120px, 22vw, 300px);
+  height: clamp(120px, 22vw, 300px);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(242, 208, 167, 0.14),
+    rgba(101, 55, 31, 0.06) 45%,
+    transparent 70%
+  );
+}
+
+.footerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-6);
+}
+
+.intro {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  line-height: 1.9;
+}
+
+.kanjiRow {
+  font-family: var(--font-jp);
+  font-size: var(--fs-body);
+  letter-spacing: 0.5em;
+  color: var(--text-muted);
+}
+
+@media (max-width: 720px) {
+  .nav {
+    display: none;
+  }
+
+  .title {
+    flex-direction: column;
+    gap: clamp(6rem, 30vw, 10rem);
+  }
+}
