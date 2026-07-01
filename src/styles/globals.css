@@ -30,6 +30,12 @@ body {
   background-attachment: fixed;
 }
 
+/* HTML content sits above the persistent WebGL backdrop. */
+.content-layer {
+  position: relative;
+  z-index: var(--z-content);
+}
+
 h1,
 h2,
 h3,
