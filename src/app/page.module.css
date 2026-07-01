@@ -4,6 +4,7 @@
   padding: var(--page-margin);
   display: grid;
   grid-template-rows: auto 1fr auto;
+  gap: var(--space-8);
   overflow: hidden;
 }
 
@@ -14,73 +15,26 @@
   gap: var(--space-6);
 }
 
-.brand {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.wordmark {
-  font-family: var(--font-serif);
-  font-size: var(--fs-h3);
-  letter-spacing: 0.32em;
-  color: var(--text-primary);
-}
-
-.tagline {
-  font-size: var(--fs-eyebrow);
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.nav {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  text-align: right;
-}
-
-.navLink {
-  font-size: var(--fs-small);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  transition: color var(--dur-fast) var(--ease-standard);
-}
-
-.navLink:hover {
-  color: var(--text-primary);
-}
-
-.title {
-  align-self: center;
-  justify-self: center;
+.center {
   display: flex;
   align-items: center;
-  gap: clamp(3rem, 12vw, 12rem);
-  font-family: var(--font-serif);
-  font-size: var(--fs-display);
-  font-weight: 500;
-  letter-spacing: var(--tracking-title);
-  color: var(--text-primary);
-  line-height: 1;
-  /* The gap between GRE and VEN is where the neural network will live. */
+  justify-content: center;
 }
 
-/* Placeholder mark for the neural network, replaced by the WebGL scene. */
-.networkSlot {
+/* Placeholder luminance for the neural network slot, replaced by WebGL. */
+.networkGlow {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: clamp(120px, 22vw, 300px);
-  height: clamp(120px, 22vw, 300px);
+  width: clamp(140px, 26vw, 340px);
+  height: clamp(140px, 26vw, 340px);
   border-radius: 50%;
+  pointer-events: none;
   background: radial-gradient(
     circle,
-    rgba(242, 208, 167, 0.14),
-    rgba(101, 55, 31, 0.06) 45%,
+    rgba(242, 208, 167, 0.16),
+    rgba(101, 55, 31, 0.07) 45%,
     transparent 70%
   );
 }
@@ -93,11 +47,25 @@
 }
 
 .intro {
+  color: var(--text-secondary);
+  line-height: 1.9;
+}
+
+.scrollHint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--fs-eyebrow);
   letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
-  color: var(--text-secondary);
-  line-height: 1.9;
+  color: var(--text-muted);
+}
+
+.scrollLine {
+  width: 1px;
+  height: 44px;
+  background: linear-gradient(to bottom, var(--color-warm-stone), transparent);
 }
 
 .kanjiRow {
@@ -108,12 +76,12 @@
 }
 
 @media (max-width: 720px) {
-  .nav {
+  .scrollHint {
     display: none;
   }
 
-  .title {
-    flex-direction: column;
-    gap: clamp(6rem, 30vw, 10rem);
+  .kanjiRow {
+    font-size: var(--fs-small);
+    letter-spacing: 0.35em;
   }
 }

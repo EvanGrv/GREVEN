@@ -1,0 +1,36 @@
+.title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2.5rem, 11vw, 11rem);
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: var(--fs-display);
+  letter-spacing: var(--tracking-title);
+  line-height: 1;
+  color: var(--text-primary);
+  margin: 0;
+  user-select: none;
+}
+
+.part {
+  display: inline-block;
+}
+
+.slot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Reserve space so GRE and VEN keep their positions even before the
+     network mounts; the WebGL layer overflows this box for depth. */
+  width: clamp(0.5rem, 2vw, 2rem);
+  align-self: stretch;
+}
+
+@media (max-width: 720px) {
+  .title {
+    flex-direction: column;
+    gap: clamp(6rem, 34vw, 12rem);
+  }
+}

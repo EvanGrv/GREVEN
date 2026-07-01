@@ -5,7 +5,13 @@
  * they are never decorative. Edit here to update the whole site.
  */
 
-export type SectionId = 'accueil' | 'recherche' | 'projets' | 'publications' | 'a-propos' | 'contact';
+export type SectionId =
+  | 'accueil'
+  | 'recherche'
+  | 'projets'
+  | 'publications'
+  | 'a-propos'
+  | 'contact';
 
 export interface Section {
   /** Stable identifier, also used as the navigation neuron id. */

@@ -1,5 +1,7 @@
-import Link from 'next/link';
 import type { Section } from '@/data/sections';
+import { Logo } from '@/components/ui/Logo/Logo';
+import { BackToNetwork } from '@/components/ui/BackToNetwork';
+import { Kanji, Eyebrow, Heading } from '@/components/typography';
 import styles from './SectionPlaceholder.module.css';
 
 /**
@@ -10,18 +12,20 @@ import styles from './SectionPlaceholder.module.css';
 export function SectionPlaceholder({ section }: { section: Section }) {
   return (
     <main id="content" className={styles.page}>
-      <header className={styles.header}>
-        <span className={styles.kanji} title={section.kanjiMeaning} aria-hidden="true">
-          {section.kanji}
-        </span>
-        <p className={styles.eyebrow}>{section.kanjiMeaning}</p>
-        <h1 className={styles.title}>{section.label}</h1>
-        <p className={styles.description}>{section.description}</p>
+      <header className={styles.top}>
+        <Logo />
       </header>
 
-      <Link href="/" className={styles.back}>
-        ← retour au réseau
-      </Link>
+      <div className={styles.body}>
+        <Kanji char={section.kanji} meaning={section.kanjiMeaning} size="lg" />
+        <Eyebrow>{section.kanjiMeaning}</Eyebrow>
+        <Heading level={1}>{section.label}</Heading>
+        <p className={styles.description}>{section.description}</p>
+      </div>
+
+      <footer className={styles.footer}>
+        <BackToNetwork />
+      </footer>
     </main>
   );
 }
