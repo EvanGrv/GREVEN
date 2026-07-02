@@ -40,11 +40,13 @@
   transition: color var(--dur-fast) var(--ease-standard);
 }
 
-.link:hover {
+.link:hover,
+.link[data-hovered='true'] {
   color: var(--text-primary);
 }
 
-.link:hover .dot {
+.link:hover .dot,
+.link[data-hovered='true'] .dot {
   border-color: var(--color-pearl);
   transform: scale(1.15);
 }
