@@ -36,11 +36,13 @@ export const NETWORK_CONFIG = {
    * behind the text (the network renders behind the HTML). Order matches
    * NEURON_SECTIONS: Recherche, Projets, Publications, À propos, Contact.
    */
+  /** Positions traced from the reference board: organic, asymmetric — cells
+   *  sit on branches, not on the corners of an X. */
   navPositions: [
-    [-3.3, 2.0, 0.4], // Recherche    — upper left, toward the corner
-    [3.4, 1.9, -0.5], // Projets      — upper right, toward the corner
-    [3.3, -2.05, 0.3], // Publications — lower right, toward the corner
-    [-3.4, -2.0, -0.4], // À propos     — lower left, toward the corner
+    [-1.9, 1.35, 0.3], // Recherche    — upper left, on the rising branch
+    [2.5, 1.9, -0.3], // Projets      — upper right cluster
+    [3.5, -1.1, 0.2], // Publications — right, below the midline
+    [-3.4, -1.6, -0.4], // À propos     — lower left
     [0.05, 0.0, 1.05], // Contact      — central hub in the GRE·VEN gap
   ] as [number, number, number][],
 

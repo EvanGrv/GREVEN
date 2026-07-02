@@ -32,26 +32,38 @@ import { useNeuronAsset, type NeuronMeshAsset } from '@/scenes/Neuron/useNeuronA
 /** Target world radius of each neuron kind (geometry is scaled to match). */
 const CENTER_TARGET_R = 0.62;
 const NAV_TARGET_R = 0.3;
-const DECO_TARGET_R = 0.42;
 const NAV_HIT_RADIUS = 0.85;
 const PULSE_DURATION = 0.85;
 
-/** Deeper, non-interactive neuron masses that add parallax depth and frame the
- *  core. Pushed well behind the focal plane — the fog + DoF melt them into the
- *  haze so they read as a ramified background, never competing with the title. */
-const DECO_POSITIONS: [number, number, number][] = [
-  [-4.9, 2.4, -2.8],
-  [5.1, -2.2, -3.1],
-  [-1.1, -3.3, -3.3],
-  [5.4, 1.6, -2.5],
-  [-5.6, -0.9, -2.7],
+/** Non-interactive cell bodies, traced from the reference board. The small
+ *  near-plane ones sit on branches beside the nav cells; the deep ones melt
+ *  into the haze; the two positive-z ones are the blurred foreground the DoF
+ *  turns into soft masses in front of the letters. */
+const DECO_LAYOUT: { p: [number, number, number]; r: number; connect: boolean }[] = [
+  { p: [1.4, 1.0, -1.2], r: 0.24, connect: true }, // on the upper-right branch
+  { p: [-2.0, -1.2, -0.8], r: 0.2, connect: true }, // beside the lower-left path
+  { p: [3.3, 2.4, -2.2], r: 0.3, connect: true }, // upper-right, deeper
+  { p: [-4.3, 1.7, -2.6], r: 0.38, connect: false }, // far upper-left haze
+  { p: [4.5, -2.3, -3.0], r: 0.36, connect: false }, // far lower-right haze
+  { p: [-0.9, -3.2, -3.2], r: 0.32, connect: true }, // below the wordmark, deep
+  { p: [-4.7, -2.5, 2.1], r: 0.3, connect: false }, // blurred foreground, left
+  { p: [4.9, 2.55, 1.9], r: 0.26, connect: false }, // blurred foreground, right
 ];
 
 /** Long, thin fibres crossing the frame far behind the focal plane: the
  *  distributed organic network the reference shows in its depths. */
-const BACK_FIBER_COUNT = 7;
+const BACK_FIBER_COUNT = 10;
 /** Free-ending tendrils radiating from the central mass. */
-const TENDRIL_COUNT = 6;
+const TENDRIL_COUNT = 10;
+
+/** Independent branch systems seeded near the frame edges — in the reference,
+ *  the corners carry their own ramifications that never reach the centre. */
+const EDGE_SYSTEMS: [number, number, number][] = [
+  [-4.6, 2.3, -1.6],
+  [4.7, 2.5, -1.9],
+  [-4.9, -2.3, -1.5],
+  [4.8, -2.1, -1.4],
+];
 
 const EMISSIVE = NETWORK_CONFIG.palette.emissive;
 
@@ -108,12 +120,13 @@ function buildFiber(
 }
 
 /** A finer sub-branch leaving a parent fibre part-way along, wandering off in
- *  a related but diverging direction — what makes the network read ramified. */
+ *  a related but diverging direction — what makes the network read ramified.
+ *  Returns the geometry plus the branch tip, so a terminal bouton can cap it. */
 function buildBranch(
   parent: THREE.CubicBezierCurve3,
   rng: SeededRandom,
   radius: number,
-): THREE.TubeGeometry {
+): { geometry: THREE.TubeGeometry; tip: THREE.Vector3 } {
   const t = rng.range(0.35, 0.7);
   const start = parent.getPoint(t);
   const along = parent.getTangent(t);
@@ -125,7 +138,10 @@ function buildBranch(
     .clone()
     .addScaledVector(along, len * 0.5)
     .addScaledVector(away, len);
-  return new THREE.TubeGeometry(makeFiberCurve(start, end, rng), 16, radius, 5, false);
+  return {
+    geometry: new THREE.TubeGeometry(makeFiberCurve(start, end, rng), 16, radius, 5, false),
+    tip: end,
+  };
 }
 
 export function Network({ quality }: { quality: QualityLevel }) {
@@ -188,19 +204,20 @@ export function Network({ quality }: { quality: QualityLevel }) {
       });
     });
 
-    // A few deeper decorative neuron masses for parallax + depth-of-field.
-    DECO_POSITIONS.forEach((p, i) => {
+    // Decorative cell bodies: branch companions, deep haze masses and the
+    // blurred foreground elements, per the reference layout.
+    DECO_LAYOUT.forEach((d, i) => {
       const v: Variant = i % 2 === 0 ? 'b' : 'c';
       out.push({
         key: `deco-${i}`,
-        position: new THREE.Vector3(...p),
+        position: new THREE.Vector3(...d.p),
         variant: v,
         rotation: randRot(),
-        meshScale: scaleFor(v, DECO_TARGET_R * rng.range(0.8, 1.2)),
-        coreRadius: 0.1,
+        meshScale: scaleFor(v, d.r * rng.range(0.9, 1.1)),
+        coreRadius: d.r * 0.28,
         coreIntensity: 0.6,
         wobble: 0.06,
-        connect: true,
+        connect: d.connect,
         showMesh: true,
       });
     });
@@ -212,15 +229,28 @@ export function Network({ quality }: { quality: QualityLevel }) {
   // neuron to neuron across the frame, branch mid-way, and a deeper layer of
   // long crossing filaments fills the background. Origins on the central mass
   // are offset from (0,0,0) so nothing converges on a single point.
-  const tubes = useMemo(() => {
+  const { tubes, tips } = useMemo(() => {
     const rng = new SeededRandom(`${NETWORK_CONFIG.seed}-axons`);
     const list: { key: string; geometry: THREE.TubeGeometry; layer: 'link' | 'fine' | 'back' }[] =
       [];
+    /** Terminal boutons: tiny membrane bulbs capping free fibre ends. */
+    const ends: { p: THREE.Vector3; r: number }[] = [];
 
     const offsetOrigin = () =>
       new THREE.Vector3(rng.range(-1, 1), rng.range(-1, 1), rng.range(-0.6, 0.6))
         .normalize()
         .multiplyScalar(rng.range(0.3, 0.6));
+
+    const pushBranch = (
+      key: string,
+      parent: THREE.CubicBezierCurve3,
+      radius: number,
+      layer: 'fine' | 'back',
+    ) => {
+      const branch = buildBranch(parent, rng, radius);
+      list.push({ key, geometry: branch.geometry, layer });
+      ends.push({ p: branch.tip, r: rng.range(0.03, 0.06) });
+    };
 
     // Central soma → each connecting neuron (leaves the soma off-centre), with
     // an occasional finer branch escaping part-way along.
@@ -232,9 +262,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
         geometry: new THREE.TubeGeometry(curve, 26, 0.014, 6, false),
         layer: 'link',
       });
-      if (rng.float() < 0.7) {
-        list.push({ key: `br-${p.key}`, geometry: buildBranch(curve, rng, 0.005), layer: 'fine' });
-      }
+      if (rng.float() < 0.7) pushBranch(`br-${p.key}`, curve, 0.005, 'fine');
     });
 
     // Neuron ↔ neuron web: each connected node also reaches its nearest
@@ -275,10 +303,35 @@ export function Network({ quality }: { quality: QualityLevel }) {
         geometry: new THREE.TubeGeometry(curve, 26, 0.005, 5, false),
         layer: 'fine',
       });
-      if (rng.float() < 0.5) {
-        list.push({ key: `dend-br-${i}`, geometry: buildBranch(curve, rng, 0.003), layer: 'fine' });
-      }
+      ends.push({ p: end, r: rng.range(0.025, 0.05) });
+      if (rng.float() < 0.65) pushBranch(`dend-br-${i}`, curve, 0.003, 'fine');
     }
+
+    // Independent edge systems: small dendrite trees rooted near the corners,
+    // never touching the centre — they make the frame feel inhabited edge to
+    // edge, exactly like the reference board.
+    EDGE_SYSTEMS.forEach((root, s) => {
+      const origin = new THREE.Vector3(...root);
+      const arms = 3;
+      for (let i = 0; i < arms; i += 1) {
+        const dir = new THREE.Vector3(
+          rng.range(-1, 1) - origin.x * 0.12,
+          rng.range(-1, 1) - origin.y * 0.12,
+          rng.range(-0.4, 0.4),
+        );
+        if (dir.lengthSq() < 1e-4) dir.set(0, 1, 0);
+        dir.normalize();
+        const end = origin.clone().addScaledVector(dir, rng.range(1.2, 2.4));
+        const curve = makeFiberCurve(origin, end, rng);
+        list.push({
+          key: `edge-${s}-${i}`,
+          geometry: new THREE.TubeGeometry(curve, 20, 0.006, 5, false),
+          layer: 'fine',
+        });
+        ends.push({ p: end, r: rng.range(0.03, 0.06) });
+        if (rng.float() < 0.6) pushBranch(`edge-br-${s}-${i}`, curve, 0.004, 'fine');
+      }
+    });
 
     // Deep crossing filaments — the hazy ramified background of the reference —
     // each with a branch so the depths look grown, not drawn.
@@ -296,10 +349,10 @@ export function Network({ quality }: { quality: QualityLevel }) {
         geometry: new THREE.TubeGeometry(curve, 26, 0.008, 6, false),
         layer: 'back',
       });
-      list.push({ key: `back-br-${i}`, geometry: buildBranch(curve, rng, 0.005), layer: 'back' });
+      pushBranch(`back-br-${i}`, curve, 0.005, 'back');
     }
 
-    return list;
+    return { tubes: list, tips: ends };
   }, [placements]);
 
   useEffect(() => {
@@ -437,7 +490,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
           <meshStandardMaterial
             color={tube.layer === 'back' ? '#3f352a' : '#564735'}
             emissive={tube.layer === 'link' ? '#4a3a26' : '#382c1c'}
-            emissiveIntensity={tube.layer === 'link' ? 0.5 : 0.35}
+            emissiveIntensity={tube.layer === 'link' ? 0.6 : 0.45}
             roughness={0.75}
             metalness={0}
             transparent
@@ -482,6 +535,14 @@ export function Network({ quality }: { quality: QualityLevel }) {
             />
           </mesh>
         </group>
+      ))}
+
+      {/* Terminal boutons — tiny membrane bulbs capping the free fibre ends,
+          as on the reference where every dendrite resolves into a small cell. */}
+      {tips.map((tip, i) => (
+        <mesh key={`tip-${i}`} position={tip.p} scale={tip.r} material={material}>
+          <sphereGeometry args={[1, 10, 10]} />
+        </mesh>
       ))}
 
       {/* Suspended dust — faint warm motes drifting in the haze (depth cue). */}
