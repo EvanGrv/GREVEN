@@ -23,13 +23,13 @@ export function PostProcessing({ quality }: { quality: QualityLevel }) {
     return (
       <EffectComposer multisampling={2} enableNormalPass={false}>
         <Bloom
-          intensity={0.72}
-          luminanceThreshold={0.2}
-          luminanceSmoothing={0.9}
+          intensity={0.45}
+          luminanceThreshold={0.5}
+          luminanceSmoothing={0.85}
           mipmapBlur
-          radius={0.62}
+          radius={0.7}
         />
-        <DepthOfField target={focusTarget} focalLength={0.01} bokehScale={1} height={480} />
+        <DepthOfField target={focusTarget} focalLength={0.018} bokehScale={2.4} height={480} />
       </EffectComposer>
     );
   }
@@ -38,11 +38,11 @@ export function PostProcessing({ quality }: { quality: QualityLevel }) {
   return (
     <EffectComposer multisampling={0} enableNormalPass={false}>
       <Bloom
-        intensity={0.5}
-        luminanceThreshold={0.2}
-        luminanceSmoothing={0.9}
+        intensity={0.4}
+        luminanceThreshold={0.5}
+        luminanceSmoothing={0.85}
         mipmapBlur
-        radius={0.62}
+        radius={0.7}
       />
     </EffectComposer>
   );

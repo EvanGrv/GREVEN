@@ -98,12 +98,13 @@ export const NETWORK_CONFIG = {
   },
 
   palette: {
-    neuron: '#8a7f6c',
-    navNeuron: '#c9a98f',
-    synapse: '#6f6858',
-    axonNear: '#7c7565',
-    axonFar: '#33362b',
-    emissive: '#f2d0a7',
+    neuron: '#746047',
+    navNeuron: '#8a7050',
+    synapse: '#564735',
+    axonNear: '#8a7050',
+    axonFar: '#564735',
+    /** Warm patined-beige glow — never a white hotspot. */
+    emissive: '#b79a72',
   },
 } as const;
 

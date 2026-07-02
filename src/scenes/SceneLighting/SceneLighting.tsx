@@ -10,16 +10,16 @@ export function SceneLighting() {
   return (
     <>
       {/* Ambient olive fill — keeps shadows warm rather than black. */}
-      <ambientLight color="#3d4034" intensity={0.55} />
+      <ambientLight color="#343328" intensity={0.4} />
 
-      {/* Pearl key light, front-upper-left. */}
-      <directionalLight color="#f2d0a7" intensity={1.15} position={[-4, 6, 8]} />
+      {/* Soft warm key, front-upper-left — patined beige, never white. */}
+      <directionalLight color="#b79a72" intensity={0.9} position={[-4, 6, 8]} />
 
       {/* Warm rim from below-right (Seal Brown) for depth. */}
-      <pointLight color="#65371f" intensity={12} distance={40} decay={2} position={[6, -4, -6]} />
+      <pointLight color="#65371f" intensity={9} distance={40} decay={2} position={[6, -4, -6]} />
 
-      {/* Faint pearl bounce to lift the far side of the network. */}
-      <pointLight color="#e5be9e" intensity={6} distance={32} decay={2} position={[3, 2, 6]} />
+      {/* Very faint front bounce so the near fibres never go pitch black. */}
+      <pointLight color="#8a7050" intensity={3} distance={28} decay={2} position={[3, 2, 6]} />
     </>
   );
 }

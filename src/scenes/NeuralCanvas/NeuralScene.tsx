@@ -13,7 +13,9 @@ import type { QualityLevel } from '@/stores/sceneStore';
 
 /** Deep, warm background baked into the scene. Rendering opaque keeps the bloom
  *  compositor correct and matches the reference's flat, mineral darkness. */
-const SCENE_BG = '#1e201a';
+const SCENE_BG = '#1c1e19';
+/** Slightly lifted olive haze — reads as depth mist, not black falloff. */
+const SCENE_FOG = '#282a21';
 
 /**
  * The WebGL scene contents. Kept in its own module so it can be dynamically
@@ -34,8 +36,8 @@ export default function NeuralScene({ quality }: { quality: QualityLevel }) {
       }}
     >
       <color attach="background" args={[SCENE_BG]} />
-      {/* Warm fog fades the periphery of the network into the background. */}
-      <fog attach="fog" args={[SCENE_BG, 8, 22]} />
+      {/* Warm haze fades the deep layers of the network into the background. */}
+      <fog attach="fog" args={[SCENE_FOG, 6, 17]} />
       <SceneLighting />
       <CameraRig />
       <NeuralTravel />
