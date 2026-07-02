@@ -50,13 +50,16 @@ export function detectQuality(): QualityLevel {
   return 'low';
 }
 
-/** Cap the device pixel ratio per quality tier to bound fill-rate cost. */
+/** Cap the device pixel ratio per quality tier to bound fill-rate cost.
+ *  Every canvas pixel runs the full post chain (bloom, DoF, grain), so cost
+ *  grows with dpr² — 1.6 instead of 2 cuts ~36% of the GPU work for a
+ *  difference the soft, filmic scene hides completely. */
 export function maxDprFor(quality: QualityLevel): number {
   switch (quality) {
     case 'high':
-      return 2;
+      return 1.6;
     case 'medium':
-      return 1.5;
+      return 1.3;
     case 'low':
       return 1;
   }

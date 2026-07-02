@@ -1,8 +1,8 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Environment, Lightformer } from '@react-three/drei';
+import { Environment, Lightformer, PerformanceMonitor } from '@react-three/drei';
 import { SceneLighting } from '@/scenes/SceneLighting/SceneLighting';
 import { CameraRig } from '@/scenes/CameraRig/CameraRig';
 import { Network } from '@/scenes/Network/Network';
@@ -26,16 +26,25 @@ const SCENE_FOG = '#282a21';
 export default function NeuralScene({ quality }: { quality: QualityLevel }) {
   usePointerParallax();
 
+  // Adaptive resolution: if the device struggles to hold the frame rate, the
+  // PerformanceMonitor steps the pixel ratio down (and back up when it
+  // recovers) so the scene stays smooth instead of draining the battery.
+  const [dpr, setDpr] = useState(maxDprFor(quality));
+
   return (
     <Canvas
       camera={{ position: [0, 0, 9], fov: 38, near: 0.1, far: 100 }}
-      dpr={[1, maxDprFor(quality)]}
+      dpr={dpr}
       gl={{
         antialias: quality !== 'low',
         alpha: false,
         powerPreference: quality === 'low' ? 'low-power' : 'high-performance',
       }}
     >
+      <PerformanceMonitor
+        onDecline={() => setDpr((d) => Math.max(1, d - 0.2))}
+        onIncline={() => setDpr((d) => Math.min(maxDprFor(quality), d + 0.2))}
+      />
       <color attach="background" args={[SCENE_BG]} />
       {/* Warm haze fades the deep layers of the network into the background. */}
       <fog attach="fog" args={[SCENE_FOG, 6, 17]} />

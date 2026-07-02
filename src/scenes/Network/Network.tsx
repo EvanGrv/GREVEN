@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { NETWORK_CONFIG } from '@/data/network.config';
 import { NEURON_SECTIONS, type SectionId } from '@/data/sections';
 import { SeededRandom } from '@/lib/prng';
@@ -382,11 +383,23 @@ export function Network({ quality }: { quality: QualityLevel }) {
       pushBranch(`back-br-${i}`, curve, 0.005, 'back');
     }
 
-    return { tubes: list, tips: ends, linkCurves: axons };
+    // Merge the ~75 individual fibres into ONE geometry per layer: 3 draw
+    // calls instead of 75, which matters far more for energy use than the
+    // triangle count. The fibres are static, so nothing is lost.
+    const layers = ['link', 'fine', 'back'] as const;
+    const mergedTubes = layers.flatMap((layer) => {
+      const parts = list.filter((t) => t.layer === layer).map((t) => t.geometry);
+      if (parts.length === 0) return [];
+      const geometry = mergeGeometries(parts, false);
+      parts.forEach((g) => g.dispose());
+      return geometry ? [{ key: layer, layer, geometry }] : [];
+    });
+
+    return { tubes: mergedTubes, tips: ends, linkCurves: axons };
   }, [placements]);
 
   useEffect(() => {
-    // Tube geometries are generated; release them when recomposed.
+    // Merged fibre geometries are generated; release them when recomposed.
     return () => tubes.forEach((t) => t.geometry.dispose());
   }, [tubes]);
 
@@ -422,6 +435,30 @@ export function Network({ quality }: { quality: QualityLevel }) {
       }),
     [],
   );
+
+  // All terminal boutons in a single instanced draw call (they are static).
+  const tipsMesh = useMemo(() => {
+    const geometry = new THREE.SphereGeometry(1, 10, 10);
+    const mesh = new THREE.InstancedMesh(geometry, synapseMaterial, tips.length);
+    const mat4 = new THREE.Matrix4();
+    const quat = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    tips.forEach((tip, i) => {
+      scale.setScalar(tip.r);
+      mat4.compose(tip.p, quat, scale);
+      mesh.setMatrixAt(i, mat4);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.frustumCulled = false;
+    return mesh;
+  }, [tips, synapseMaterial]);
+
+  useEffect(() => {
+    return () => {
+      tipsMesh.geometry.dispose();
+      tipsMesh.dispose();
+    };
+  }, [tipsMesh]);
 
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
   const scratch = useMemo(
@@ -613,12 +650,9 @@ export function Network({ quality }: { quality: QualityLevel }) {
       ))}
 
       {/* Terminal boutons — tiny bulbs capping the free fibre ends. Spec:
-          "slightly emissive, soft falloff" — a faint warm charge, never a lamp. */}
-      {tips.map((tip, i) => (
-        <mesh key={`tip-${i}`} position={tip.p} scale={tip.r} material={synapseMaterial}>
-          <sphereGeometry args={[1, 10, 10]} />
-        </mesh>
-      ))}
+          "slightly emissive, soft falloff" — a faint warm charge, never a
+          lamp. One instanced draw call for all of them. */}
+      <primitive object={tipsMesh} />
 
       {/* Suspended dust — faint warm motes drifting in the haze (depth cue). */}
       <Dust />
