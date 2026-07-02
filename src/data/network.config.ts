@@ -37,10 +37,10 @@ export const NETWORK_CONFIG = {
    * NEURON_SECTIONS: Recherche, Projets, Publications, À propos, Contact.
    */
   navPositions: [
-    [-1.95, 1.68, 0.4], // Recherche    — upper left, above the letters
-    [1.95, 1.58, -0.4], // Projets      — upper right, above the letters
-    [2.0, -1.66, 0.3], // Publications — lower right, below the letters
-    [-2.0, -1.62, -0.3], // À propos     — lower left, below the letters
+    [-3.3, 2.0, 0.4], // Recherche    — upper left, toward the corner
+    [3.4, 1.9, -0.5], // Projets      — upper right, toward the corner
+    [3.3, -2.05, 0.3], // Publications — lower right, toward the corner
+    [-3.4, -2.0, -0.4], // À propos     — lower left, toward the corner
     [0.05, 0.0, 1.05], // Contact      — central hub in the GRE·VEN gap
   ] as [number, number, number][],
 

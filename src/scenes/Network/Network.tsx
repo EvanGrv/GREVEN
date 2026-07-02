@@ -40,9 +40,11 @@ const PULSE_DURATION = 0.85;
  *  core. Pushed well behind the focal plane — the fog + DoF melt them into the
  *  haze so they read as a ramified background, never competing with the title. */
 const DECO_POSITIONS: [number, number, number][] = [
-  [-3.7, 1.8, -2.8],
-  [3.9, -1.7, -3.1],
-  [-0.7, -2.9, -3.3],
+  [-4.9, 2.4, -2.8],
+  [5.1, -2.2, -3.1],
+  [-1.1, -3.3, -3.3],
+  [5.4, 1.6, -2.5],
+  [-5.6, -0.9, -2.7],
 ];
 
 /** Long, thin fibres crossing the frame far behind the focal plane: the
@@ -261,7 +263,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
     // them forking once, so the central neuron reads as a living dendrite tree.
     for (let i = 0; i < TENDRIL_COUNT; i += 1) {
       const angle = (i / TENDRIL_COUNT) * Math.PI * 2 + rng.range(-0.6, 0.6);
-      const len = rng.range(1.1, 2.1);
+      const len = rng.range(1.6, 3.1);
       const end = new THREE.Vector3(
         Math.cos(angle) * len,
         Math.sin(angle) * len * rng.range(0.6, 1),
