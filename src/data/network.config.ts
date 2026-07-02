@@ -37,11 +37,11 @@ export const NETWORK_CONFIG = {
    * NEURON_SECTIONS: Recherche, Projets, Publications, À propos, Contact.
    */
   navPositions: [
-    [-3.7, 2.05, 0.5], // Recherche    — upper left
-    [3.6, 1.8, -0.6], // Projets      — upper right
-    [3.8, -1.95, 0.35], // Publications — lower right
-    [-3.8, -1.85, -0.5], // À propos     — lower left
-    [0.15, 2.55, 0.8], // Contact      — top centre, above the wordmark
+    [-1.95, 1.68, 0.4], // Recherche    — upper left, above the letters
+    [1.95, 1.58, -0.4], // Projets      — upper right, above the letters
+    [2.0, -1.66, 0.3], // Publications — lower right, below the letters
+    [-2.0, -1.62, -0.3], // À propos     — lower left, below the letters
+    [0.05, 0.0, 1.05], // Contact      — central hub in the GRE·VEN gap
   ] as [number, number, number][],
 
   motion: {
@@ -64,14 +64,14 @@ export const NETWORK_CONFIG = {
   },
 
   counts: {
-    high: { neurons: 46, synapses: 60, axonSamples: 8 },
-    medium: { neurons: 30, synapses: 36, axonSamples: 6 },
-    low: { neurons: 18, synapses: 18, axonSamples: 4 },
+    high: { neurons: 20, synapses: 22, axonSamples: 8 },
+    medium: { neurons: 14, synapses: 16, axonSamples: 6 },
+    low: { neurons: 9, synapses: 10, axonSamples: 4 },
   } satisfies Record<QualityLevel, QualityCounts>,
 
   /** Sizes (world units) for each node kind. */
   size: {
-    navNeuron: [0.24, 0.34] as [number, number],
+    navNeuron: [0.3, 0.42] as [number, number],
     neuron: [0.1, 0.24] as [number, number],
     synapse: [0.035, 0.09] as [number, number],
   },

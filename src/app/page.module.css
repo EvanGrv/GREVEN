@@ -63,11 +63,11 @@
   pointer-events: none;
   background: radial-gradient(
     ellipse at center,
-    rgba(28, 28, 21, 0.74),
-    rgba(28, 28, 21, 0.34) 46%,
+    rgba(28, 28, 21, 0.42),
+    rgba(28, 28, 21, 0.2) 48%,
     transparent 72%
   );
-  filter: blur(24px);
+  filter: blur(28px);
 }
 
 /* Discrete section kanji, echoing the mockup's corners. Very low presence.
