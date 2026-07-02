@@ -41,5 +41,7 @@ next-env.d.ts
 !.vscode/extensions.json
 .idea
 
-# Large source 3D assets (optimized version committed under public/models/)
+# Large source 3D assets (optimized versions committed under public/models/)
 /Meshy_AI_*.glb
+/neuronne_sans_liaison*.glb
+/Neuroone_sans_laison*.glb
