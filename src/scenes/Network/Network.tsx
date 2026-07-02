@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useRouter } from 'next/navigation';
 import * as THREE from 'three';
 import { NETWORK_CONFIG, countsFor } from '@/data/network.config';
 import { generateNetwork } from '@/lib/network-generator';
 import { createFieldNoise, cubicBezier, writeNodePosition } from '@/lib/network-motion';
-import { getSection, type SectionId } from '@/data/sections';
+import type { SectionId } from '@/data/sections';
 import { useSceneStore, type QualityLevel } from '@/stores/sceneStore';
 
 /**
@@ -28,7 +27,6 @@ const FAR = new THREE.Color(NETWORK_CONFIG.palette.axonFar);
 const HILITE = new THREE.Color(NETWORK_CONFIG.palette.emissive);
 const MAX_PULSES = NETWORK_CONFIG.axon.maxDegree + 1;
 const PULSE_SPEED = 1.15; // progress units per second
-const TRAVEL_DELAY_MS = 650; // let the pulse read before navigating (Step 8 replaces this)
 
 interface PulseEdge {
   edge: number;
@@ -39,10 +37,10 @@ export function Network({ quality }: { quality: QualityLevel }) {
   const reducedMotion = useSceneStore((s) => s.reducedMotion);
   const setHoveredSection = useSceneStore((s) => s.setHoveredSection);
   const setActiveSection = useSceneStore((s) => s.setActiveSection);
+  const requestTravel = useSceneStore((s) => s.requestTravel);
   const hoveredSection = useSceneStore((s) => s.hoveredSection);
   const activeSection = useSceneStore((s) => s.activeSection);
 
-  const router = useRouter();
   const camera = useThree((s) => s.camera);
 
   const model = useMemo(() => generateNetwork(quality), [quality]);
@@ -109,7 +107,6 @@ export function Network({ quality }: { quality: QualityLevel }) {
   const lastHovered = useRef<SectionId | null>(null);
   const pulseEdges = useRef<PulseEdge[]>([]);
   const pulseStart = useRef<number | null>(null);
-  const travelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Write depth-based axon colours, brightening the highlighted node's edges.
   const fillAxonColors = useCallback(
@@ -331,37 +328,29 @@ export function Network({ quality }: { quality: QualityLevel }) {
     };
   }, [hoveredSection]);
 
-  const navigateTo = useCallback(
+  // Select a neuron → highlight it and request the cinematic travel, using the
+  // neuron's current world position (the NeuralTravel controller does the rest).
+  const selectNeuron = useCallback(
     (id: SectionId) => {
-      const href = getSection(id)?.href;
-      if (!href) return;
+      const idx = navNodeIndex.get(id);
+      if (idx === undefined) return;
       setActiveSection(id);
-      if (reducedMotion) {
-        router.push(href);
-        return;
-      }
-      if (travelTimer.current) clearTimeout(travelTimer.current);
-      travelTimer.current = setTimeout(() => router.push(href), TRAVEL_DELAY_MS);
+      const p = positions[idx]!;
+      requestTravel(id, [p.x, p.y, p.z]);
     },
-    [router, setActiveSection, reducedMotion],
+    [navNodeIndex, positions, setActiveSection, requestTravel],
   );
 
-  // Click on a hovered neuron → select + navigate.
+  // Click on a hovered neuron → select + travel.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const onClick = () => {
       const id = lastHovered.current;
-      if (id) navigateTo(id);
+      if (id) selectNeuron(id);
     };
     window.addEventListener('click', onClick);
     return () => window.removeEventListener('click', onClick);
-  }, [navigateTo]);
-
-  useEffect(() => {
-    return () => {
-      if (travelTimer.current) clearTimeout(travelTimer.current);
-    };
-  }, []);
+  }, [selectNeuron]);
 
   useFrame((state) => {
     // Raycast the 5 nav neurons for hover (canvas is pointer-events:none).

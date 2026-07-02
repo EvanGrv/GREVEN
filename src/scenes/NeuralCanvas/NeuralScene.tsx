@@ -5,6 +5,7 @@ import { SceneLighting } from '@/scenes/SceneLighting/SceneLighting';
 import { CameraRig } from '@/scenes/CameraRig/CameraRig';
 import { Network } from '@/scenes/Network/Network';
 import { PostProcessing } from '@/scenes/PostProcessing/PostProcessing';
+import { NeuralTravel } from '@/transitions/NeuralTravel';
 import { usePointerParallax } from '@/hooks/usePointerParallax';
 import { maxDprFor } from '@/lib/device-detect';
 import type { QualityLevel } from '@/stores/sceneStore';
@@ -36,6 +37,7 @@ export default function NeuralScene({ quality }: { quality: QualityLevel }) {
       <fog attach="fog" args={[SCENE_BG, 8, 22]} />
       <SceneLighting />
       <CameraRig />
+      <NeuralTravel />
       <Network quality={quality} />
       <PostProcessing quality={quality} />
     </Canvas>
