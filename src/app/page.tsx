@@ -1,6 +1,7 @@
 import { Logo } from '@/components/ui/Logo/Logo';
 import { SideNav } from '@/components/navigation/SideNav';
 import { GrevenTitle, Eyebrow, Kanji } from '@/components/typography';
+import { ScrollExploration } from '@/sections/ScrollExploration';
 import { getSection } from '@/data/sections';
 import styles from './page.module.css';
 
@@ -17,47 +18,51 @@ const projets = getSection('projets')!;
  */
 export default function HomePage() {
   return (
-    <main id="content" className={styles.hero}>
-      <header className={styles.topRow}>
-        <Logo />
-        <SideNav />
-      </header>
+    <>
+      <main id="content" className={styles.hero}>
+        <header className={styles.topRow}>
+          <Logo />
+          <SideNav />
+        </header>
 
-      {/* Discrete section kanji anchoring the composition (as in the mockup). */}
-      <Kanji
-        char={recherche.kanji}
-        meaning={recherche.kanjiMeaning}
-        size="lg"
-        className={styles.kanjiLeft}
-      />
-      <Kanji
-        char={projets.kanji}
-        meaning={projets.kanjiMeaning}
-        size="lg"
-        className={styles.kanjiRight}
-      />
+        {/* Discrete section kanji anchoring the composition (as in the mockup). */}
+        <Kanji
+          char={recherche.kanji}
+          meaning={recherche.kanjiMeaning}
+          size="lg"
+          className={styles.kanjiLeft}
+        />
+        <Kanji
+          char={projets.kanji}
+          meaning={projets.kanjiMeaning}
+          size="lg"
+          className={styles.kanjiRight}
+        />
 
-      <div className={styles.center}>
-        <span aria-hidden="true" className={styles.scrim} />
-        <GrevenTitle />
-      </div>
+        <div className={styles.center}>
+          <span aria-hidden="true" className={styles.scrim} />
+          <GrevenTitle />
+        </div>
 
-      <footer className={styles.footerRow}>
-        <Eyebrow className={styles.intro}>
-          Explorer
-          <br />
-          mon univers
-        </Eyebrow>
+        <footer className={styles.footerRow}>
+          <Eyebrow className={styles.intro}>
+            Explorer
+            <br />
+            mon univers
+          </Eyebrow>
 
-        <span className={styles.scrollHint} aria-hidden="true">
-          <span className={styles.scrollWord}>scroll</span>
-          <span className={styles.scrollLine} />
-        </span>
+          <span className={styles.scrollHint} aria-hidden="true">
+            <span className={styles.scrollWord}>scroll</span>
+            <span className={styles.scrollLine} />
+          </span>
 
-        <p className={styles.kanjiRow} aria-hidden="true">
-          静·遠·質·道·特
-        </p>
-      </footer>
-    </main>
+          <p className={styles.kanjiRow} aria-hidden="true">
+            静·遠·質·道·特
+          </p>
+        </footer>
+      </main>
+
+      <ScrollExploration />
+    </>
   );
 }

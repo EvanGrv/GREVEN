@@ -36,6 +36,20 @@ body {
   z-index: var(--z-content);
 }
 
+/* Lenis smooth scroll. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
 h1,
 h2,
 h3,

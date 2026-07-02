@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Noto_Sans_JP, Noto_Serif_JP, Playfair_Display } from 'next/font/google';
 import { NeuralBackdrop } from '@/scenes/NeuralCanvas/NeuralBackdrop';
+import { SmoothScroll } from '@/components/layout/SmoothScroll';
 import '@/styles/globals.css';
 
 // High-contrast display serif for the GREVEN wordmark and Latin headings.
@@ -84,6 +85,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#content" className="sr-only">
           Aller au contenu principal
         </a>
+        <SmoothScroll />
         <NeuralBackdrop />
         <div className="content-layer">{children}</div>
       </body>
