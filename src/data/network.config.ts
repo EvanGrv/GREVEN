@@ -69,11 +69,32 @@ export const NETWORK_CONFIG = {
     low: { neurons: 9, synapses: 10, axonSamples: 4 },
   } satisfies Record<QualityLevel, QualityCounts>,
 
-  /** Sizes (world units) for each node kind. */
+  /** Sizes (world units) for each node kind. A modest soma lets the dendrites
+   *  define the neuron's silhouette (as in real neurons). */
   size: {
-    navNeuron: [0.3, 0.42] as [number, number],
-    neuron: [0.1, 0.24] as [number, number],
-    synapse: [0.035, 0.09] as [number, number],
+    navNeuron: [0.2, 0.28] as [number, number],
+    neuron: [0.08, 0.16] as [number, number],
+    synapse: [0.03, 0.08] as [number, number],
+  },
+
+  /** Dendrites: fine, branching filaments radiating from each neuron — the
+   *  defining organic feature. Generated deterministically, they follow their
+   *  neuron and fade toward the tips. */
+  dendrite: {
+    /** Primary dendrite count range (navigation neurons are richer). */
+    perNeuronNav: [8, 12] as [number, number],
+    perNeuron: [4, 7] as [number, number],
+    /** Length as a multiple of the soma radius. */
+    lengthFactor: 6,
+    /** Sample points per dendrite (higher = smoother, curvier). */
+    segments: 5,
+    /** Probability a dendrite spawns a finer sub-branch. */
+    branchProb: 0.55,
+    /** Curvature / wander of each filament. */
+    jitter: 0.55,
+    /** Brightness at the soma end (fades to 0 at the tip). */
+    baseBrightnessNav: 0.7,
+    baseBrightness: 0.5,
   },
 
   palette: {

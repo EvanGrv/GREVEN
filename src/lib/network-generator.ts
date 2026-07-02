@@ -2,7 +2,13 @@ import { NETWORK_CONFIG, countsFor } from '@/data/network.config';
 import { NEURON_SECTIONS } from '@/data/sections';
 import { SeededRandom } from '@/lib/prng';
 import type { QualityLevel } from '@/stores/sceneStore';
-import type { NetworkEdge, NetworkNode, NetworkModel, Vec3 } from '@/types/network';
+import type {
+  DendriteSegment,
+  NetworkEdge,
+  NetworkNode,
+  NetworkModel,
+  Vec3,
+} from '@/types/network';
 
 /**
  * Deterministic neural-network generator.
@@ -51,6 +57,56 @@ function makeNode(
     phase: rng.range(0, Math.PI * 2),
     ...(sectionId ? { sectionId } : {}),
   };
+}
+
+/** Grow one branching dendrite tree for a node, in local space. */
+function buildDendrites(
+  nodeIndex: number,
+  node: NetworkNode,
+  isNav: boolean,
+  rng: SeededRandom,
+): DendriteSegment[] {
+  const cfg = NETWORK_CONFIG.dendrite;
+  const segs: DendriteSegment[] = [];
+  const count = isNav
+    ? rng.int(cfg.perNeuronNav[0], cfg.perNeuronNav[1])
+    : rng.int(cfg.perNeuron[0], cfg.perNeuron[1]);
+  const baseB = isNav ? cfg.baseBrightnessNav : cfg.baseBrightness;
+
+  const grow = (origin: Vec3, dir: Vec3, length: number, steps: number, startB: number): Vec3[] => {
+    const pts: Vec3[] = [origin];
+    const bs: number[] = [startB];
+    let cur = origin;
+    let d = normalize(dir);
+    const step = length / steps;
+    for (let s = 1; s <= steps; s += 1) {
+      const [jx, jy, jz] = rng.onSphere(1, 0);
+      d = normalize([d[0] + jx * cfg.jitter, d[1] + jy * cfg.jitter, d[2] + jz * cfg.jitter]);
+      cur = [cur[0] + d[0] * step, cur[1] + d[1] * step, cur[2] + d[2] * step];
+      pts.push(cur);
+      bs.push(startB * Math.pow(1 - s / steps, 1.3));
+    }
+    for (let i = 0; i < pts.length - 1; i += 1) {
+      segs.push({ node: nodeIndex, a: pts[i]!, b: pts[i + 1]!, ba: bs[i]!, bb: bs[i + 1]! });
+    }
+    return pts;
+  };
+
+  for (let p = 0; p < count; p += 1) {
+    const [dx, dy, dz] = rng.onSphere(1, 0);
+    const dir: Vec3 = [dx, dy, dz * 0.85];
+    const len = node.radius * cfg.lengthFactor * rng.range(0.7, 1.3);
+    const r = node.radius * 0.7;
+    const start: Vec3 = [dir[0] * r, dir[1] * r, dir[2] * r];
+    const pts = grow(start, dir, len, cfg.segments, baseB);
+    if (rng.float() < cfg.branchProb && pts.length > 2) {
+      const origin = pts[rng.int(1, pts.length - 2)]!;
+      const [rx, ry, rz] = rng.onSphere(1, 0);
+      const bdir: Vec3 = [dir[0] + rx * 0.9, dir[1] + ry * 0.9, dir[2] + rz * 0.9];
+      grow(origin, bdir, len * rng.range(0.4, 0.7), Math.max(2, cfg.segments - 2), baseB * 0.7);
+    }
+  }
+  return segs;
 }
 
 export function generateNetwork(quality: QualityLevel): NetworkModel {
@@ -133,9 +189,18 @@ export function generateNetwork(quality: QualityLevel): NetworkModel {
     }
   }
 
+  // --- Dendrites: fine radiating filaments on every neuron (not synapses). ---
+  const dendrites: DendriteSegment[] = [];
+  for (let i = 0; i < nodes.length; i += 1) {
+    const n = nodes[i]!;
+    if (n.kind === 'synapse') continue;
+    for (const seg of buildDendrites(i, n, n.kind === 'nav', rng)) dendrites.push(seg);
+  }
+
   return {
     nodes,
     edges,
+    dendrites,
     navIndices: Array.from({ length: navCount }, (_, i) => i),
   };
 }

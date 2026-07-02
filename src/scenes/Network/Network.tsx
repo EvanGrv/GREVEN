@@ -95,10 +95,37 @@ export function Network({ quality }: { quality: QualityLevel }) {
     [totalVerts],
   );
 
+  // Dendrite vertex buffers (2 verts per segment). Colours are static (depth +
+  // brightness fade toward the tips); positions follow the parent neuron.
+  const dendriteCount = model.dendrites.length;
+  const dendrite = useMemo(() => {
+    const pos = new Float32Array(dendriteCount * 2 * 3);
+    const col = new Float32Array(dendriteCount * 2 * 3);
+    const base = new THREE.Color(NETWORK_CONFIG.palette.axonNear);
+    const warm = new THREE.Color(NETWORK_CONFIG.palette.emissive);
+    const c = new THREE.Color();
+    model.dendrites.forEach((d, i) => {
+      c.copy(FAR)
+        .lerp(base, d.ba)
+        .lerp(warm, d.ba * 0.25);
+      col[i * 6] = c.r;
+      col[i * 6 + 1] = c.g;
+      col[i * 6 + 2] = c.b;
+      c.copy(FAR)
+        .lerp(base, d.bb)
+        .lerp(warm, d.bb * 0.25);
+      col[i * 6 + 3] = c.r;
+      col[i * 6 + 4] = c.g;
+      col[i * 6 + 5] = c.b;
+    });
+    return { pos, col };
+  }, [model, dendriteCount]);
+
   const neuronsRef = useRef<THREE.InstancedMesh>(null);
   const synapsesRef = useRef<THREE.InstancedMesh>(null);
   const navRefs = useRef<(THREE.Mesh | null)[]>([]);
   const axonGeomRef = useRef<THREE.BufferGeometry>(null);
+  const dendriteGeomRef = useRef<THREE.BufferGeometry>(null);
   const pulseRef = useRef<THREE.InstancedMesh>(null);
   const placed = useRef(false);
 
@@ -251,6 +278,24 @@ export function Network({ quality }: { quality: QualityLevel }) {
         (geom.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
       }
 
+      // 5b) Dendrites — local filaments translated with their parent neuron.
+      const dg = dendriteGeomRef.current;
+      if (dg) {
+        const arr = dendrite.pos;
+        const dends = model.dendrites;
+        for (let i = 0; i < dends.length; i += 1) {
+          const d = dends[i]!;
+          const p = positions[d.node]!;
+          arr[i * 6] = p.x + d.a[0];
+          arr[i * 6 + 1] = p.y + d.a[1];
+          arr[i * 6 + 2] = p.z + d.a[2];
+          arr[i * 6 + 3] = p.x + d.b[0];
+          arr[i * 6 + 4] = p.y + d.b[1];
+          arr[i * 6 + 5] = p.z + d.b[2];
+        }
+        (dg.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
+      }
+
       // 6) Selection pulses travelling along the active neuron's axons.
       const pm = pulseRef.current;
       if (pm) {
@@ -290,7 +335,19 @@ export function Network({ quality }: { quality: QualityLevel }) {
         pm.instanceMatrix.needsUpdate = true;
       }
     };
-  }, [model, noise, positions, dummy, scratch, axon, navIdx, neuronIdx, synapseIdx, samples]);
+  }, [
+    model,
+    noise,
+    positions,
+    dummy,
+    scratch,
+    axon,
+    dendrite,
+    navIdx,
+    neuronIdx,
+    synapseIdx,
+    samples,
+  ]);
 
   // Initial placement + colours before first paint.
   useLayoutEffect(() => {
@@ -428,6 +485,30 @@ export function Network({ quality }: { quality: QualityLevel }) {
           toneMapped={false}
         />
       </instancedMesh>
+
+      {/* Dendrites — fine radiating filaments (the organic neuron silhouette). */}
+      <lineSegments frustumCulled={false}>
+        <bufferGeometry ref={dendriteGeomRef}>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[dendrite.pos, 3]}
+            count={dendriteCount * 2}
+            usage={THREE.DynamicDrawUsage}
+          />
+          <bufferAttribute
+            attach="attributes-color"
+            args={[dendrite.col, 3]}
+            count={dendriteCount * 2}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial
+          vertexColors
+          transparent
+          opacity={0.7}
+          depthWrite={false}
+          blending={THREE.NormalBlending}
+        />
+      </lineSegments>
 
       {/* Axons. */}
       <lineSegments frustumCulled={false}>

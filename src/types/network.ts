@@ -29,9 +29,20 @@ export interface NetworkEdge {
   c2: Vec3;
 }
 
+/** One straight segment of a dendrite filament, in the parent node's local
+ *  space (so it translates with the neuron). Brightness fades toward the tip. */
+export interface DendriteSegment {
+  node: number;
+  a: Vec3;
+  b: Vec3;
+  ba: number;
+  bb: number;
+}
+
 export interface NetworkModel {
   nodes: NetworkNode[];
   edges: NetworkEdge[];
+  dendrites: DendriteSegment[];
   /** Indices of the 5 navigation neurons (always the first nodes). */
   navIndices: number[];
 }

@@ -29,7 +29,7 @@ export function PostProcessing({ quality }: { quality: QualityLevel }) {
           mipmapBlur
           radius={0.62}
         />
-        <DepthOfField target={focusTarget} focalLength={0.02} bokehScale={2} height={480} />
+        <DepthOfField target={focusTarget} focalLength={0.01} bokehScale={1} height={480} />
       </EffectComposer>
     );
   }
