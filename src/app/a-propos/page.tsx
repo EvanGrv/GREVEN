@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { SectionPlaceholder } from '@/sections/SectionPlaceholder';
+import { SectionLayout } from '@/sections/SectionLayout';
 import { getSection } from '@/data/sections';
+import { SECTION_CONTENT } from '@/data/content';
 
 const section = getSection('a-propos')!;
 
@@ -10,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function AProposPage() {
-  return <SectionPlaceholder section={section} />;
+  return <SectionLayout section={section} content={SECTION_CONTENT['a-propos']} />;
 }
