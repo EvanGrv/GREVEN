@@ -109,14 +109,41 @@ function makeFiberCurve(
   return new THREE.CubicBezierCurve3(start, c1, c2, end);
 }
 
+/** Tapered tube: thick where the fibre leaves the cell, thin at the far end —
+ *  the "variable thickness with natural curvature" of the spec board. Built as
+ *  a unit-radius tube whose rings are then scaled along the curve. */
+function taperedTube(
+  curve: THREE.CubicBezierCurve3,
+  tubularSegments: number,
+  r0: number,
+  r1: number,
+  radialSegments = 6,
+): THREE.BufferGeometry {
+  const geo = new THREE.TubeGeometry(curve, tubularSegments, 1, radialSegments, false);
+  const pos = geo.getAttribute('position') as THREE.BufferAttribute;
+  const ringVerts = radialSegments + 1;
+  const center = new THREE.Vector3();
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i += 1) {
+    const t = Math.min(Math.floor(i / ringVerts) / tubularSegments, 1);
+    curve.getPoint(t, center);
+    const r = r0 + (r1 - r0) * t;
+    v.fromBufferAttribute(pos, i).sub(center).multiplyScalar(r).add(center);
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
 /** Warm filament (axon or dendrite) between two points in the network. */
 function buildFiber(
   start: THREE.Vector3,
   end: THREE.Vector3,
   rng: SeededRandom,
-  radius = 0.014,
-): THREE.TubeGeometry {
-  return new THREE.TubeGeometry(makeFiberCurve(start, end, rng), 26, radius, 6, false);
+  r0 = 0.014,
+  r1 = r0 * 0.45,
+): THREE.BufferGeometry {
+  return taperedTube(makeFiberCurve(start, end, rng), 26, r0, r1);
 }
 
 /** A finer sub-branch leaving a parent fibre part-way along, wandering off in
@@ -126,7 +153,7 @@ function buildBranch(
   parent: THREE.CubicBezierCurve3,
   rng: SeededRandom,
   radius: number,
-): { geometry: THREE.TubeGeometry; tip: THREE.Vector3 } {
+): { geometry: THREE.BufferGeometry; tip: THREE.Vector3 } {
   const t = rng.range(0.35, 0.7);
   const start = parent.getPoint(t);
   const along = parent.getTangent(t);
@@ -139,7 +166,7 @@ function buildBranch(
     .addScaledVector(along, len * 0.5)
     .addScaledVector(away, len);
   return {
-    geometry: new THREE.TubeGeometry(makeFiberCurve(start, end, rng), 16, radius, 5, false),
+    geometry: taperedTube(makeFiberCurve(start, end, rng), 16, radius, radius * 0.4, 5),
     tip: end,
   };
 }
@@ -229,12 +256,14 @@ export function Network({ quality }: { quality: QualityLevel }) {
   // neuron to neuron across the frame, branch mid-way, and a deeper layer of
   // long crossing filaments fills the background. Origins on the central mass
   // are offset from (0,0,0) so nothing converges on a single point.
-  const { tubes, tips } = useMemo(() => {
+  const { tubes, tips, linkCurves } = useMemo(() => {
     const rng = new SeededRandom(`${NETWORK_CONFIG.seed}-axons`);
-    const list: { key: string; geometry: THREE.TubeGeometry; layer: 'link' | 'fine' | 'back' }[] =
+    const list: { key: string; geometry: THREE.BufferGeometry; layer: 'link' | 'fine' | 'back' }[] =
       [];
     /** Terminal boutons: tiny membrane bulbs capping free fibre ends. */
     const ends: { p: THREE.Vector3; r: number }[] = [];
+    /** Main axon curves, kept so idle signal pulses can travel along them. */
+    const axons: THREE.CubicBezierCurve3[] = [];
 
     const offsetOrigin = () =>
       new THREE.Vector3(rng.range(-1, 1), rng.range(-1, 1), rng.range(-0.6, 0.6))
@@ -249,7 +278,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
     ) => {
       const branch = buildBranch(parent, rng, radius);
       list.push({ key, geometry: branch.geometry, layer });
-      ends.push({ p: branch.tip, r: rng.range(0.03, 0.06) });
+      ends.push({ p: branch.tip, r: rng.range(0.022, 0.045) });
     };
 
     // Central soma → each connecting neuron (leaves the soma off-centre), with
@@ -259,9 +288,10 @@ export function Network({ quality }: { quality: QualityLevel }) {
       const curve = makeFiberCurve(offsetOrigin(), p.position, rng);
       list.push({
         key: p.key,
-        geometry: new THREE.TubeGeometry(curve, 26, 0.014, 6, false),
+        geometry: taperedTube(curve, 26, 0.016, 0.007),
         layer: 'link',
       });
+      axons.push(curve);
       if (rng.float() < 0.7) pushBranch(`br-${p.key}`, curve, 0.005, 'fine');
     });
 
@@ -281,7 +311,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
       if (nearest) {
         list.push({
           key: `web-${p.key}`,
-          geometry: buildFiber(p.position, (nearest as Placement).position, rng, 0.009),
+          geometry: buildFiber(p.position, (nearest as Placement).position, rng, 0.008, 0.005),
           layer: 'fine',
         });
       }
@@ -300,10 +330,10 @@ export function Network({ quality }: { quality: QualityLevel }) {
       const curve = makeFiberCurve(offsetOrigin(), end, rng);
       list.push({
         key: `dend-${i}`,
-        geometry: new THREE.TubeGeometry(curve, 26, 0.005, 5, false),
+        geometry: taperedTube(curve, 26, 0.006, 0.002, 5),
         layer: 'fine',
       });
-      ends.push({ p: end, r: rng.range(0.025, 0.05) });
+      ends.push({ p: end, r: rng.range(0.02, 0.04) });
       if (rng.float() < 0.65) pushBranch(`dend-br-${i}`, curve, 0.003, 'fine');
     }
 
@@ -325,10 +355,10 @@ export function Network({ quality }: { quality: QualityLevel }) {
         const curve = makeFiberCurve(origin, end, rng);
         list.push({
           key: `edge-${s}-${i}`,
-          geometry: new THREE.TubeGeometry(curve, 20, 0.006, 5, false),
+          geometry: taperedTube(curve, 20, 0.006, 0.0025, 5),
           layer: 'fine',
         });
-        ends.push({ p: end, r: rng.range(0.03, 0.06) });
+        ends.push({ p: end, r: rng.range(0.022, 0.045) });
         if (rng.float() < 0.6) pushBranch(`edge-br-${s}-${i}`, curve, 0.004, 'fine');
       }
     });
@@ -346,13 +376,13 @@ export function Network({ quality }: { quality: QualityLevel }) {
       const curve = makeFiberCurve(start, end, rng);
       list.push({
         key: `back-${i}`,
-        geometry: new THREE.TubeGeometry(curve, 26, 0.008, 6, false),
+        geometry: taperedTube(curve, 26, 0.009, 0.004),
         layer: 'back',
       });
       pushBranch(`back-br-${i}`, curve, 0.005, 'back');
     }
 
-    return { tubes: list, tips: ends };
+    return { tubes: list, tips: ends, linkCurves: axons };
   }, [placements]);
 
   useEffect(() => {
@@ -371,10 +401,27 @@ export function Network({ quality }: { quality: QualityLevel }) {
   const groupRefs = useRef<(THREE.Group | null)[]>([]);
   const coreRefs = useRef<(THREE.Mesh | null)[]>([]);
   const pulseRef = useRef<THREE.Mesh>(null);
+  const idlePulseRef = useRef<THREE.Mesh>(null);
+  const idlePulse = useRef({ curve: -1, start: 0, nextAt: 4 });
   const emphasis = useRef<Float32Array>(new Float32Array(placements.length));
   const lastHovered = useRef<SectionId | null>(null);
   const pulseStart = useRef<number | null>(null);
   const pulseTarget = useRef<THREE.Vector3 | null>(null);
+
+  // Synapse material (spec: slightly emissive, soft falloff, organic
+  // imperfection) shared by every terminal bouton.
+  const synapseMaterial = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#564735'),
+        emissive: new THREE.Color('#8a7050'),
+        emissiveIntensity: 0.35,
+        roughness: 0.6,
+        metalness: 0,
+        toneMapped: true,
+      }),
+    [],
+  );
 
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
   const scratch = useMemo(
@@ -441,13 +488,15 @@ export function Network({ quality }: { quality: QualityLevel }) {
       setHoveredSection(hoveredId);
     }
 
-    // 2) Per-neuron wobble + core breathing / hover emphasis.
+    // 2) Per-neuron sway + soma pulsation (spec: 1.00→1.05 over ~4–6s) +
+    //    core breathing / hover emphasis.
     for (let i = 0; i < placements.length; i += 1) {
       const p = placements[i]!;
       const grp = groupRefs.current[i];
       if (grp && !reducedMotion) {
         grp.rotation.x = Math.sin(t * 0.3 + i) * p.wobble;
         grp.rotation.y = Math.cos(t * 0.24 + i * 1.7) * p.wobble;
+        grp.scale.setScalar(1.025 + Math.sin(t * (Math.PI / 2.6) + i * 2.1) * 0.025);
       }
       const core = coreRefs.current[i];
       if (core) {
@@ -461,7 +510,33 @@ export function Network({ quality }: { quality: QualityLevel }) {
       }
     }
 
-    // 3) Core → selected neuron pulse.
+    // 3) Idle signal propagation (spec: pulse travels along an axon, ~1–2s):
+    //    every few seconds a faint charge leaves the centre along a random
+    //    axon — the calm "living network" heartbeat.
+    const idle = idlePulseRef.current;
+    if (idle && linkCurves.length > 0) {
+      const st = idlePulse.current;
+      if (!reducedMotion && t >= st.nextAt && st.curve < 0) {
+        st.curve = Math.floor(Math.random() * linkCurves.length);
+        st.start = t;
+      }
+      if (st.curve >= 0) {
+        const progress = (t - st.start) / 1.6;
+        if (progress <= 1) {
+          linkCurves[st.curve]!.getPoint(progress, scratch.cur);
+          idle.position.copy(scratch.cur);
+          // Swells mid-travel, fades at both ends.
+          idle.scale.setScalar(0.045 + Math.sin(progress * Math.PI) * 0.03);
+          idle.visible = true;
+        } else {
+          idle.visible = false;
+          st.curve = -1;
+          st.nextAt = t + 3 + Math.random() * 4;
+        }
+      }
+    }
+
+    // 4) Core → selected neuron pulse.
     const pulse = pulseRef.current;
     if (pulse) {
       const target = pulseTarget.current;
@@ -537,16 +612,31 @@ export function Network({ quality }: { quality: QualityLevel }) {
         </group>
       ))}
 
-      {/* Terminal boutons — tiny membrane bulbs capping the free fibre ends,
-          as on the reference where every dendrite resolves into a small cell. */}
+      {/* Terminal boutons — tiny bulbs capping the free fibre ends. Spec:
+          "slightly emissive, soft falloff" — a faint warm charge, never a lamp. */}
       {tips.map((tip, i) => (
-        <mesh key={`tip-${i}`} position={tip.p} scale={tip.r} material={material}>
+        <mesh key={`tip-${i}`} position={tip.p} scale={tip.r} material={synapseMaterial}>
           <sphereGeometry args={[1, 10, 10]} />
         </mesh>
       ))}
 
       {/* Suspended dust — faint warm motes drifting in the haze (depth cue). */}
       <Dust />
+
+      {/* Idle signal charge travelling along a random axon. */}
+      <mesh ref={idlePulseRef} visible={false}>
+        <sphereGeometry args={[1, 10, 10]} />
+        <meshStandardMaterial
+          color={EMISSIVE}
+          emissive={EMISSIVE}
+          emissiveIntensity={1.5}
+          roughness={0.4}
+          metalness={0}
+          transparent
+          opacity={0.85}
+          toneMapped
+        />
+      </mesh>
 
       {/* Core → neuron selection pulse. */}
       <mesh ref={pulseRef} visible={false}>
@@ -564,9 +654,22 @@ export function Network({ quality }: { quality: QualityLevel }) {
   );
 }
 
-/** Sparse warm dust suspended through the depth range. Deterministic, static
- *  (the camera parallax alone makes it drift), cheap: one Points draw call. */
+/** Sparse warm dust suspended through the depth range. Deterministic, cheap
+ *  (one Points draw call); the whole field drifts very slowly (spec: "slow
+ *  random movement, floating ambiance") on top of the camera parallax. */
 function Dust() {
+  const ref = useRef<THREE.Points>(null);
+  const reducedMotion = useSceneStore((s) => s.reducedMotion);
+
+  useFrame((state) => {
+    const pts = ref.current;
+    if (!pts || reducedMotion) return;
+    const t = state.clock.elapsedTime;
+    pts.rotation.z = t * 0.004;
+    pts.position.y = Math.sin(t * 0.05) * 0.18;
+    pts.position.x = Math.cos(t * 0.037) * 0.12;
+  });
+
   const positions = useMemo(() => {
     const rng = new SeededRandom(`${NETWORK_CONFIG.seed}-dust`);
     const COUNT = 140;
@@ -580,7 +683,7 @@ function Dust() {
   }, []);
 
   return (
-    <points>
+    <points ref={ref}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>

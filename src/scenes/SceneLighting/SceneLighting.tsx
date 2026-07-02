@@ -20,6 +20,10 @@ export function SceneLighting() {
 
       {/* Very faint front bounce so the near fibres never go pitch black. */}
       <pointLight color="#8a7050" intensity={3} distance={28} decay={2} position={[3, 2, 6]} />
+
+      {/* Back rim (spec: "back light for separation") — detaches the dark
+          membranes from the dark backdrop without brightening the scene. */}
+      <directionalLight color="#8a7050" intensity={0.35} position={[0, 3, -8]} />
     </>
   );
 }
