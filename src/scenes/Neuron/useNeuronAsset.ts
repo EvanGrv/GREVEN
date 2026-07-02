@@ -24,7 +24,7 @@ export interface NeuronAssets {
   /** Gently lobed soma. */
   c: NeuronMeshAsset;
   /** Shared smoked-membrane material (rim-lit against the dark scene). */
-  material: THREE.MeshStandardMaterial;
+  material: THREE.MeshPhysicalMaterial;
 }
 
 /** Pulls the first mesh out of a loaded GLTF, centres it, and gives it normals
@@ -59,15 +59,26 @@ export function useNeuronAsset(): NeuronAssets {
   const gltfC = useGLTF(MODEL_C_URL);
 
   return useMemo(() => {
-    const material = new THREE.MeshStandardMaterial({
+    const material = new THREE.MeshPhysicalMaterial({
       // Smoked-resin membrane: a dark warm body that melts into the backdrop;
       // the silhouette is drawn by the rim, and the slight transparency lets
       // the emissive nucleus inside breathe through like subsurface glow.
+      // Physical extras give the cinematic read: a soft wet clearcoat that
+      // catches the environment, and a velvety sheen on grazing light — a
+      // living membrane, never plastic or metal.
       color: new THREE.Color('#524434'),
       emissive: new THREE.Color('#2b2115'),
       emissiveIntensity: 0.45,
-      roughness: 0.5,
+      roughness: 0.48,
       metalness: 0,
+      clearcoat: 0.35,
+      clearcoatRoughness: 0.45,
+      sheen: 0.55,
+      sheenRoughness: 0.65,
+      sheenColor: new THREE.Color('#b79a72'),
+      ior: 1.38,
+      specularIntensity: 0.55,
+      envMapIntensity: 0.7,
       transparent: true,
       opacity: 0.94,
       side: THREE.FrontSide,
