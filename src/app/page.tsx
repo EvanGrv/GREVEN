@@ -1,5 +1,5 @@
 import { Logo } from '@/components/ui/Logo/Logo';
-import { SideNav } from '@/components/navigation/SideNav';
+import { Navigation } from '@/components/navigation/Navigation';
 import { GrevenTitle, Eyebrow, Kanji } from '@/components/typography';
 import { ScrollExploration } from '@/sections/ScrollExploration';
 import { getSection } from '@/data/sections';
@@ -22,7 +22,7 @@ export default function HomePage() {
       <main id="content" className={styles.hero}>
         <header className={styles.topRow}>
           <Logo />
-          <SideNav />
+          <Navigation />
         </header>
 
         {/* Discrete section kanji anchoring the composition (as in the mockup). */}

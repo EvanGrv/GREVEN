@@ -1,7 +1,7 @@
 import type { Section } from '@/data/sections';
 import type { SectionContent } from '@/data/content/types';
 import { Logo } from '@/components/ui/Logo/Logo';
-import { SideNav } from '@/components/navigation/SideNav';
+import { Navigation } from '@/components/navigation/Navigation';
 import { BackToNetwork } from '@/components/ui/BackToNetwork';
 import { Kanji, Eyebrow, Heading } from '@/components/typography';
 import { SectionVisual } from './visuals/SectionVisual';
@@ -19,7 +19,7 @@ export function SectionLayout({ section, content }: { section: Section; content:
     <main id="content" className={styles.page}>
       <header className={styles.top}>
         <Logo />
-        <SideNav />
+        <Navigation />
       </header>
 
       <div className={styles.grid}>
