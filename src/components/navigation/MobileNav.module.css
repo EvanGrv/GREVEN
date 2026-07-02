@@ -66,12 +66,6 @@
   color: var(--color-pearl);
 }
 
-.kanji {
-  font-family: var(--font-jp);
-  font-size: var(--fs-h3);
-  color: var(--text-muted);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .overlay {
     animation: none;

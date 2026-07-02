@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { NEURON_SECTIONS, type SectionId } from '@/data/sections';
 import { NETWORK_CONFIG } from '@/data/network.config';
 import { useSceneStore } from '@/stores/sceneStore';
-import { Kanji, Eyebrow, Heading } from '@/components/typography';
+import { Eyebrow, Heading } from '@/components/typography';
 import { scrollToNetworkTop } from '@/components/layout/SmoothScroll';
 import styles from './ScrollExploration.module.css';
 
@@ -77,7 +77,6 @@ export function ScrollExploration() {
           className={`${styles.step} ${index % 2 === 1 ? styles.right : styles.left}`}
         >
           <div className={styles.block}>
-            <Kanji char={section.kanji} meaning={section.kanjiMeaning} size="lg" />
             <Eyebrow>{`0${index + 1} · ${section.kanjiMeaning}`}</Eyebrow>
             <Heading level={2}>{section.label}</Heading>
             <p className={styles.desc}>{section.description}</p>

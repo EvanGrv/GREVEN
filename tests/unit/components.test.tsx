@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { GrevenTitle } from '@/components/typography/GrevenTitle';
-import { Kanji } from '@/components/typography/Kanji';
 import { EgMark } from '@/components/ui/Logo/EgMark';
 
 describe('GrevenTitle', () => {
@@ -11,14 +10,6 @@ describe('GrevenTitle', () => {
     expect(heading).toBeInTheDocument();
     // The visual parts remain in the DOM for the GRE [slot] VEN composition.
     expect(heading.textContent).toBe('GREVEN');
-  });
-});
-
-describe('Kanji', () => {
-  it('hides the glyph from assistive tech but exposes the meaning', () => {
-    render(<Kanji char="知" meaning="connaissance" />);
-    expect(screen.getByText('connaissance')).toHaveClass('sr-only');
-    expect(screen.getByText('知')).toHaveAttribute('aria-hidden', 'true');
   });
 });
 

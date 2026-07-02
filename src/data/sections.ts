@@ -1,8 +1,7 @@
 /**
  * Canonical list of portfolio sections.
  * Each section maps to one navigation neuron in the 3D network.
- * Kanji carry a documented meaning (see docs/IMPLEMENTATION_PLAN.md §4);
- * they are never decorative. Edit here to update the whole site.
+ * Edit here to update the whole site.
  */
 
 export type SectionId =
@@ -20,9 +19,7 @@ export interface Section {
   href: string;
   /** Display label (fr). */
   label: string;
-  /** Documented kanji. */
-  kanji: string;
-  /** Documented meaning of the kanji. */
+  /** One-word theme of the section (eyebrow above the heading). */
   kanjiMeaning: string;
   /** Short editorial description. */
   description: string;
@@ -33,7 +30,6 @@ export const SECTIONS: Section[] = [
     id: 'accueil',
     href: '/',
     label: 'Accueil',
-    kanji: '静',
     kanjiMeaning: 'calme',
     description: 'Carte du réseau — vue d’ensemble.',
   },
@@ -41,7 +37,6 @@ export const SECTIONS: Section[] = [
     id: 'recherche',
     href: '/recherche',
     label: 'Recherche',
-    kanji: '知',
     kanjiMeaning: 'connaissance',
     description: 'Machine Learning, séries temporelles, RL et réseaux de neurones.',
   },
@@ -49,7 +44,6 @@ export const SECTIONS: Section[] = [
     id: 'projets',
     href: '/projets',
     label: 'Projets',
-    kanji: '美',
     kanjiMeaning: 'accomplissement',
     description: 'Projets académiques et professionnels.',
   },
@@ -57,7 +51,6 @@ export const SECTIONS: Section[] = [
     id: 'publications',
     href: '/publications',
     label: 'Publications',
-    kanji: '道',
     kanjiMeaning: 'voie',
     description: 'Articles, conférences et contributions scientifiques.',
   },
@@ -65,7 +58,6 @@ export const SECTIONS: Section[] = [
     id: 'a-propos',
     href: '/a-propos',
     label: 'À propos',
-    kanji: '質',
     kanjiMeaning: 'essence',
     description: 'Parcours, vision de la recherche et compétences.',
   },
@@ -73,7 +65,6 @@ export const SECTIONS: Section[] = [
     id: 'contact',
     href: '/contact',
     label: 'Contact',
-    kanji: '特',
     kanjiMeaning: 'singularité',
     description: 'Entrer en contact ou collaborer.',
   },

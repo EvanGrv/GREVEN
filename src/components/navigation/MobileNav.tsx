@@ -55,9 +55,6 @@ export function MobileNav() {
                   aria-current={pathname === section.href ? 'page' : undefined}
                   onClick={() => setOpen(false)}
                 >
-                  <span className={styles.kanji} aria-hidden="true">
-                    {section.kanji}
-                  </span>
                   <span>{section.label}</span>
                 </Link>
               </li>

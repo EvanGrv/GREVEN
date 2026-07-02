@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Noto_Sans_JP, Noto_Serif_JP, Playfair_Display } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
 import { NeuralBackdrop } from '@/scenes/NeuralCanvas/NeuralBackdrop';
 import { SmoothScroll } from '@/components/layout/SmoothScroll';
 import '@/styles/globals.css';
@@ -10,21 +10,6 @@ const playfair = Playfair_Display({
   weight: ['400', '500', '600'],
   style: ['normal', 'italic'],
   variable: '--font-playfair',
-  display: 'swap',
-});
-
-// Kept for Japanese glyphs (kanji headings).
-const notoSerifJp = Noto_Serif_JP({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-noto-serif-jp',
-  display: 'swap',
-});
-
-const notoSansJp = Noto_Sans_JP({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  variable: '--font-noto-sans-jp',
   display: 'swap',
 });
 
@@ -77,10 +62,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="fr"
-      className={`${playfair.variable} ${notoSerifJp.variable} ${notoSansJp.variable} ${inter.variable}`}
-    >
+    <html lang="fr" className={`${playfair.variable} ${inter.variable}`}>
       <body>
         <a href="#content" className="sr-only">
           Aller au contenu principal

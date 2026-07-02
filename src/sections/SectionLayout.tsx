@@ -3,7 +3,7 @@ import type { SectionContent } from '@/data/content/types';
 import { Logo } from '@/components/ui/Logo/Logo';
 import { Navigation } from '@/components/navigation/Navigation';
 import { BackToNetwork } from '@/components/ui/BackToNetwork';
-import { Kanji, Eyebrow, Heading } from '@/components/typography';
+import { Eyebrow, Heading } from '@/components/typography';
 import { SectionVisual } from './visuals/SectionVisual';
 import { ContactForm } from './ContactForm';
 import styles from './SectionLayout.module.css';
@@ -25,7 +25,6 @@ export function SectionLayout({ section, content }: { section: Section; content:
       <div className={styles.grid}>
         <div className={styles.body}>
           <div className={styles.head}>
-            <Kanji char={section.kanji} meaning={section.kanjiMeaning} size="lg" />
             <Eyebrow>{section.kanjiMeaning}</Eyebrow>
             <Heading level={1}>{section.label}</Heading>
             <p className={styles.intro}>{content.intro}</p>

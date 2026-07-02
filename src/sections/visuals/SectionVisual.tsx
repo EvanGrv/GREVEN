@@ -24,7 +24,7 @@ export function SectionVisual({ kind }: { kind: VisualKind }) {
   );
 }
 
-/** Recherche (知) — a dense reasoning graph with a highlighted path. */
+/** Recherche — a dense reasoning graph with a highlighted path. */
 function ReasoningGraph() {
   const nodes: [number, number][] = [
     [40, 60],
@@ -78,7 +78,7 @@ function ReasoningGraph() {
   );
 }
 
-/** Projets (美) — stacked model layers / modules connected across columns. */
+/** Projets — stacked model layers / modules connected across columns. */
 function ModelLayers() {
   const cols = [30, 100, 170, 240];
   const rows = [70, 110, 150];
@@ -126,7 +126,7 @@ function ModelLayers() {
   );
 }
 
-/** Publications (道) — structured vectors flowing through a bottleneck. */
+/** Publications — structured vectors flowing through a bottleneck. */
 function EmbeddingFlow() {
   const rowsY = [70, 110, 150];
   return (
@@ -171,7 +171,7 @@ function EmbeddingFlow() {
   );
 }
 
-/** À propos (質) — a continuous neural trajectory (the path/parcours). */
+/** À propos — a continuous neural trajectory (the path/parcours). */
 function Trajectory() {
   const pts: [number, number][] = [
     [24, 180],
@@ -201,7 +201,7 @@ function Trajectory() {
   );
 }
 
-/** Contact (特) — many connections converging to a central node. */
+/** Contact — many connections converging to a central node. */
 function ConvergingNode() {
   const cx = 160;
   const cy = 120;
