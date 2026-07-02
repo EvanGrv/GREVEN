@@ -4,8 +4,9 @@ import { useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 
-const MODEL_A_URL = '/models/neuron-a.glb';
-const MODEL_B_URL = '/models/neuron-b.glb';
+const MODEL_A_URL = '/models/soma-a.glb';
+const MODEL_B_URL = '/models/soma-b.glb';
+const MODEL_C_URL = '/models/soma-c.glb';
 
 export interface NeuronMeshAsset {
   /** Geometry centred on its own origin, with normals computed for lighting. */
@@ -16,14 +17,19 @@ export interface NeuronMeshAsset {
 }
 
 export interface NeuronAssets {
+  /** Round soma. */
   a: NeuronMeshAsset;
+  /** Elongated ovoid soma. */
   b: NeuronMeshAsset;
-  /** Shared warm-matte dendrite material (rim-lit against the dark scene). */
+  /** Gently lobed soma. */
+  c: NeuronMeshAsset;
+  /** Shared smoked-membrane material (rim-lit against the dark scene). */
   material: THREE.MeshStandardMaterial;
 }
 
 /** Pulls the first mesh out of a loaded GLTF, centres it, and gives it normals
- *  (the source meshes carry POSITION only) so it lights properly. */
+ *  (the source meshes carry POSITION only) so it lights properly. Vertices are
+ *  welded in the export, so the computed normals come out smooth. */
 function prepareGeometry(scene: THREE.Object3D): NeuronMeshAsset {
   let geometry: THREE.BufferGeometry | null = null;
   scene.traverse((obj) => {
@@ -41,37 +47,40 @@ function prepareGeometry(scene: THREE.Object3D): NeuronMeshAsset {
 }
 
 /**
- * Loads the two bare neuron meshes (dendrite trees, POSITION-only) the user
- * supplied and prepares them for a hand-composed network: centred, normal-
- * equipped geometries plus one shared warm-matte material. Cores/somas and the
- * connections between neurons are added in <Network>, not here. Suspends until
- * loaded (wrap the consumer in <Suspense>).
+ * Loads the three clean single-soma heads (round / ovoid / lobed, POSITION-only
+ * Meshy exports decimated to 5–11k tris) and prepares them for the composed
+ * network: centred, normal-equipped geometries plus one shared membrane
+ * material. Emissive nuclei and the fibres between neurons are added in
+ * <Network>, not here. Suspends until loaded (wrap the consumer in <Suspense>).
  */
 export function useNeuronAsset(): NeuronAssets {
   const gltfA = useGLTF(MODEL_A_URL);
   const gltfB = useGLTF(MODEL_B_URL);
+  const gltfC = useGLTF(MODEL_C_URL);
 
   return useMemo(() => {
     const material = new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#7d6647'),
-      // A restrained warm self-glow keeps the filaments visible in the dark
-      // without turning them into neon; the bright cores + bloom do the drama.
-      emissive: new THREE.Color('#48341f'),
-      emissiveIntensity: 0.65,
-      roughness: 0.8,
-      metalness: 0.15,
-      side: THREE.DoubleSide,
+      // Smoked-resin membrane: a dark warm body that melts into the backdrop;
+      // the silhouette is drawn by the rim, and the slight transparency lets
+      // the emissive nucleus inside breathe through like subsurface glow.
+      color: new THREE.Color('#524434'),
+      emissive: new THREE.Color('#2b2115'),
+      emissiveIntensity: 0.45,
+      roughness: 0.5,
+      metalness: 0,
+      transparent: true,
+      opacity: 0.94,
+      side: THREE.FrontSide,
       toneMapped: true,
     });
 
-    // Fresnel rim glow: silhouettes and the thin dendrite processes catch a warm
-    // light, so the solid blob sculpt reads as a luminous neuron (as in the
-    // reference) instead of a matte rock. vNormal is view-space, so facing
-    // surfaces stay dark and grazing edges glow.
+    // Fresnel rim glow: the smooth spheroids catch a warm patined-beige light
+    // on their grazing edges (vNormal is view-space, so facing surfaces stay
+    // dark), which reads as a translucent organic membrane, never clay.
     material.onBeforeCompile = (shader) => {
-      shader.uniforms.uRimColor = { value: new THREE.Color('#f3ce9a') };
-      shader.uniforms.uRimPower = { value: 2.1 };
-      shader.uniforms.uRimStrength = { value: 1.35 };
+      shader.uniforms.uRimColor = { value: new THREE.Color('#b79a72') };
+      shader.uniforms.uRimPower = { value: 2.6 };
+      shader.uniforms.uRimStrength = { value: 0.9 };
       shader.fragmentShader = shader.fragmentShader
         .replace(
           '#include <common>',
@@ -93,10 +102,12 @@ uniform float uRimStrength;`,
     return {
       a: prepareGeometry(gltfA.scene),
       b: prepareGeometry(gltfB.scene),
+      c: prepareGeometry(gltfC.scene),
       material,
     };
-  }, [gltfA, gltfB]);
+  }, [gltfA, gltfB, gltfC]);
 }
 
 useGLTF.preload(MODEL_A_URL);
 useGLTF.preload(MODEL_B_URL);
+useGLTF.preload(MODEL_C_URL);

@@ -10,13 +10,14 @@ import { useSceneStore, type QualityLevel } from '@/stores/sceneStore';
 import { useNeuronAsset, type NeuronMeshAsset } from '@/scenes/Neuron/useNeuronAsset';
 
 /**
- * The neural network, hand-composed from two bare neuron meshes the user
- * supplied (dendrite trees, no cores, no connections). We mix both variants —
- * a large central neuron in the GRE·VEN gap plus secondary neurons around it and
- * a few deeper decorative ones — each rotated/scaled for real perspective. On
- * top of the meshes we add the glowing soma **cores** (emissive spheres → bloom)
- * and the **connections** (procedural warm axon tubes from the core outward),
- * giving the lifeless meshes life and matching the reference render.
+ * The neural network, hand-composed from three clean single-soma heads the
+ * user supplied (round / ovoid / lobed spheroids). Every neuron = a membrane
+ * soma mesh + an emissive **nucleus** inside (glowing through the slightly
+ * transparent membrane) — the large central neuron sits in the GRE·VEN gap,
+ * five smaller ones are the clickable nav nodes, and a few deeper ones frame
+ * the scene. The **fibres** (axons, dendrite tendrils, deep crossing
+ * filaments) are all procedural, branch mid-way, and link neuron to neuron so
+ * the network reads as a distributed organic mesh, matching the reference.
  *
  * Every neuron keeps a fixed world position, so the five clickable secondary
  * neurons hit-test exactly (cheap ray-sphere on their cores; the geometry is
@@ -29,23 +30,30 @@ import { useNeuronAsset, type NeuronMeshAsset } from '@/scenes/Neuron/useNeuronA
  */
 
 /** Target world radius of each neuron kind (geometry is scaled to match). */
-const CENTER_TARGET_R = 2.5;
-const NAV_TARGET_R = 1.05;
-const DECO_TARGET_R = 0.8;
+const CENTER_TARGET_R = 0.62;
+const NAV_TARGET_R = 0.3;
+const DECO_TARGET_R = 0.42;
 const NAV_HIT_RADIUS = 0.85;
 const PULSE_DURATION = 0.85;
 
 /** Deeper, non-interactive neuron masses that add parallax depth and frame the
- *  core (kept behind the plane so the DoF softens them, as in the reference). */
+ *  core. Pushed well behind the focal plane — the fog + DoF melt them into the
+ *  haze so they read as a ramified background, never competing with the title. */
 const DECO_POSITIONS: [number, number, number][] = [
-  [-3.2, 1.5, -1.6],
-  [3.3, -1.4, -1.8],
-  [-0.4, -2.6, -2.0],
+  [-3.7, 1.8, -2.8],
+  [3.9, -1.7, -3.1],
+  [-0.7, -2.9, -3.3],
 ];
+
+/** Long, thin fibres crossing the frame far behind the focal plane: the
+ *  distributed organic network the reference shows in its depths. */
+const BACK_FIBER_COUNT = 7;
+/** Free-ending tendrils radiating from the central mass. */
+const TENDRIL_COUNT = 6;
 
 const EMISSIVE = NETWORK_CONFIG.palette.emissive;
 
-type Variant = 'a' | 'b';
+type Variant = 'a' | 'b' | 'c';
 
 interface Placement {
   key: string;
@@ -64,15 +72,18 @@ interface Placement {
   showMesh: boolean;
 }
 
-/** Organic warm filament (axon or dendrite) from the central core outward. */
-function buildTube(end: THREE.Vector3, rng: SeededRandom, radius = 0.018): THREE.TubeGeometry {
-  const start = new THREE.Vector3(0, 0, 0);
+/** Organic curve between two points (bowed off-axis so nothing is straight). */
+function makeFiberCurve(
+  start: THREE.Vector3,
+  end: THREE.Vector3,
+  rng: SeededRandom,
+): THREE.CubicBezierCurve3 {
   const dir = end.clone().sub(start);
   const len = dir.length();
   const perp = new THREE.Vector3(-dir.y, dir.x, dir.z * 0.4);
   if (perp.lengthSq() < 1e-4) perp.set(0, 1, 0);
   perp.normalize();
-  const amp = len * 0.14;
+  const amp = len * 0.2;
   const c1 = start
     .clone()
     .addScaledVector(dir, 0.34)
@@ -81,8 +92,38 @@ function buildTube(end: THREE.Vector3, rng: SeededRandom, radius = 0.018): THREE
     .clone()
     .addScaledVector(dir, 0.68)
     .addScaledVector(perp, amp * rng.range(-1, 1));
-  const curve = new THREE.CubicBezierCurve3(start, c1, c2, end);
-  return new THREE.TubeGeometry(curve, 26, radius, 6, false);
+  return new THREE.CubicBezierCurve3(start, c1, c2, end);
+}
+
+/** Warm filament (axon or dendrite) between two points in the network. */
+function buildFiber(
+  start: THREE.Vector3,
+  end: THREE.Vector3,
+  rng: SeededRandom,
+  radius = 0.014,
+): THREE.TubeGeometry {
+  return new THREE.TubeGeometry(makeFiberCurve(start, end, rng), 26, radius, 6, false);
+}
+
+/** A finer sub-branch leaving a parent fibre part-way along, wandering off in
+ *  a related but diverging direction — what makes the network read ramified. */
+function buildBranch(
+  parent: THREE.CubicBezierCurve3,
+  rng: SeededRandom,
+  radius: number,
+): THREE.TubeGeometry {
+  const t = rng.range(0.35, 0.7);
+  const start = parent.getPoint(t);
+  const along = parent.getTangent(t);
+  const away = new THREE.Vector3(rng.range(-1, 1), rng.range(-1, 1), rng.range(-0.5, 0.5));
+  if (away.lengthSq() < 1e-4) away.set(0, 1, 0);
+  away.normalize();
+  const len = rng.range(0.5, 1.3);
+  const end = start
+    .clone()
+    .addScaledVector(along, len * 0.5)
+    .addScaledVector(away, len);
+  return new THREE.TubeGeometry(makeFiberCurve(start, end, rng), 16, radius, 5, false);
 }
 
 export function Network({ quality }: { quality: QualityLevel }) {
@@ -93,10 +134,13 @@ export function Network({ quality }: { quality: QualityLevel }) {
   const hoveredSection = useSceneStore((s) => s.hoveredSection);
 
   const camera = useThree((s) => s.camera);
-  const { a, b, material } = useNeuronAsset();
+  const { a, b, c, material } = useNeuronAsset();
 
   const coreSegments = quality === 'low' ? 12 : 20;
-  const geoOf = useCallback((v: Variant): NeuronMeshAsset => (v === 'a' ? a : b), [a, b]);
+  const geoOf = useCallback(
+    (v: Variant): NeuronMeshAsset => (v === 'a' ? a : v === 'b' ? b : c),
+    [a, b, c],
+  );
 
   // Deterministic composition: central + 5 nav + decorative, mixing variants.
   const placements = useMemo<Placement[]>(() => {
@@ -107,49 +151,52 @@ export function Network({ quality }: { quality: QualityLevel }) {
     const randRot = () =>
       new THREE.Euler(rng.range(-0.5, 0.5), rng.range(-Math.PI, Math.PI), rng.range(-0.4, 0.4));
 
-    // Central neuron mass — variant A cluster, the detailed core of the frame.
+    // Central neuron — the round soma, the anchor of the composition.
     out.push({
       key: 'center',
       position: new THREE.Vector3(0, 0, 0),
       variant: 'a',
       rotation: new THREE.Euler(-0.16, 0.22, 0.05),
       meshScale: scaleFor('a', CENTER_TARGET_R),
-      coreRadius: 0.28,
-      coreIntensity: 2.4,
+      coreRadius: 0.2,
+      coreIntensity: 1.15,
       wobble: 0.02,
       connect: false,
       showMesh: true,
     });
 
-    // Five clickable secondary neurons: glowing cores on axon threads (no mesh,
-    // so the frame stays clean and the nodes read like the reference).
+    // Five clickable secondary neurons: a small soma head each (variants
+    // mixed, sizes slightly varied) with a nucleus glowing through the
+    // membrane — real cells on the branches, as in the reference.
+    const navVariants: Variant[] = ['b', 'c', 'a', 'c', 'b'];
     NEURON_SECTIONS.forEach((section, i) => {
+      const v = navVariants[i]!;
       out.push({
         key: `nav-${section.id}`,
         sectionId: section.id,
         position: new THREE.Vector3(...NETWORK_CONFIG.navPositions[i]!),
-        variant: 'a',
+        variant: v,
         rotation: randRot(),
-        meshScale: scaleFor('a', NAV_TARGET_R),
-        coreRadius: 0.15,
-        coreIntensity: 1.7,
+        meshScale: scaleFor(v, NAV_TARGET_R * rng.range(0.85, 1.2)),
+        coreRadius: 0.12,
+        coreIntensity: 1.2,
         wobble: 0.05,
         connect: true,
-        showMesh: false,
+        showMesh: true,
       });
     });
 
     // A few deeper decorative neuron masses for parallax + depth-of-field.
     DECO_POSITIONS.forEach((p, i) => {
-      const v: Variant = i % 2 === 0 ? 'b' : 'a';
+      const v: Variant = i % 2 === 0 ? 'b' : 'c';
       out.push({
         key: `deco-${i}`,
         position: new THREE.Vector3(...p),
         variant: v,
         rotation: randRot(),
-        meshScale: scaleFor(v, DECO_TARGET_R),
-        coreRadius: 0.09,
-        coreIntensity: 0.8,
+        meshScale: scaleFor(v, DECO_TARGET_R * rng.range(0.8, 1.2)),
+        coreRadius: 0.1,
+        coreIntensity: 0.6,
         wobble: 0.06,
         connect: true,
         showMesh: true,
@@ -159,28 +206,95 @@ export function Network({ quality }: { quality: QualityLevel }) {
     return out;
   }, [geoOf]);
 
-  // Procedural connection tubes (central core → each connecting neuron) plus
-  // free-ending dendrite tendrils that give the core its radiating starburst.
+  // Procedural fibre graph. The reference network is NOT a star: fibres link
+  // neuron to neuron across the frame, branch mid-way, and a deeper layer of
+  // long crossing filaments fills the background. Origins on the central mass
+  // are offset from (0,0,0) so nothing converges on a single point.
   const tubes = useMemo(() => {
     const rng = new SeededRandom(`${NETWORK_CONFIG.seed}-axons`);
-    const list = placements
-      .filter((p) => p.connect)
-      .map((p) => ({
-        key: p.key,
-        geometry: buildTube(p.position, rng),
-        dendrite: false,
-      }));
+    const list: { key: string; geometry: THREE.TubeGeometry; layer: 'link' | 'fine' | 'back' }[] =
+      [];
 
-    const DENDRITES = 9;
-    for (let i = 0; i < DENDRITES; i += 1) {
-      const angle = (i / DENDRITES) * Math.PI * 2 + rng.range(-0.3, 0.3);
-      const len = rng.range(1.0, 2.0);
+    const offsetOrigin = () =>
+      new THREE.Vector3(rng.range(-1, 1), rng.range(-1, 1), rng.range(-0.6, 0.6))
+        .normalize()
+        .multiplyScalar(rng.range(0.3, 0.6));
+
+    // Central soma → each connecting neuron (leaves the soma off-centre), with
+    // an occasional finer branch escaping part-way along.
+    const connected = placements.filter((p) => p.connect);
+    connected.forEach((p) => {
+      const curve = makeFiberCurve(offsetOrigin(), p.position, rng);
+      list.push({
+        key: p.key,
+        geometry: new THREE.TubeGeometry(curve, 26, 0.014, 6, false),
+        layer: 'link',
+      });
+      if (rng.float() < 0.7) {
+        list.push({ key: `br-${p.key}`, geometry: buildBranch(curve, rng, 0.005), layer: 'fine' });
+      }
+    });
+
+    // Neuron ↔ neuron web: each connected node also reaches its nearest
+    // neighbour, so the network reads as a distributed mesh, not a star.
+    connected.forEach((p, i) => {
+      let nearest: Placement | null = null;
+      let best = Infinity;
+      connected.forEach((q, j) => {
+        if (j <= i) return;
+        const d = p.position.distanceToSquared(q.position);
+        if (d < best) {
+          best = d;
+          nearest = q;
+        }
+      });
+      if (nearest) {
+        list.push({
+          key: `web-${p.key}`,
+          geometry: buildFiber(p.position, (nearest as Placement).position, rng, 0.009),
+          layer: 'fine',
+        });
+      }
+    });
+
+    // Free-ending tendrils from the central soma — thin, asymmetric, half of
+    // them forking once, so the central neuron reads as a living dendrite tree.
+    for (let i = 0; i < TENDRIL_COUNT; i += 1) {
+      const angle = (i / TENDRIL_COUNT) * Math.PI * 2 + rng.range(-0.6, 0.6);
+      const len = rng.range(1.1, 2.1);
       const end = new THREE.Vector3(
         Math.cos(angle) * len,
-        Math.sin(angle) * len,
-        rng.range(-0.5, 0.5),
+        Math.sin(angle) * len * rng.range(0.6, 1),
+        rng.range(-0.8, 0.4),
       );
-      list.push({ key: `dend-${i}`, geometry: buildTube(end, rng, 0.006), dendrite: true });
+      const curve = makeFiberCurve(offsetOrigin(), end, rng);
+      list.push({
+        key: `dend-${i}`,
+        geometry: new THREE.TubeGeometry(curve, 26, 0.005, 5, false),
+        layer: 'fine',
+      });
+      if (rng.float() < 0.5) {
+        list.push({ key: `dend-br-${i}`, geometry: buildBranch(curve, rng, 0.003), layer: 'fine' });
+      }
+    }
+
+    // Deep crossing filaments — the hazy ramified background of the reference —
+    // each with a branch so the depths look grown, not drawn.
+    for (let i = 0; i < BACK_FIBER_COUNT; i += 1) {
+      const y1 = rng.range(-3, 3);
+      const start = new THREE.Vector3(rng.range(-7.5, -2), y1, rng.range(-4.5, -2.2));
+      const end = new THREE.Vector3(
+        rng.range(2, 7.5),
+        y1 + rng.range(-2.4, 2.4),
+        rng.range(-4.5, -2.2),
+      );
+      const curve = makeFiberCurve(start, end, rng);
+      list.push({
+        key: `back-${i}`,
+        geometry: new THREE.TubeGeometry(curve, 26, 0.008, 6, false),
+        layer: 'back',
+      });
+      list.push({ key: `back-br-${i}`, geometry: buildBranch(curve, rng, 0.005), layer: 'back' });
     }
 
     return list;
@@ -288,7 +402,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
         const breathe = reducedMotion ? 1 : 1 + Math.sin(t * 0.7 + i) * 0.06;
         core.scale.setScalar(p.coreRadius * (1 + e[i]! * 0.7) * breathe);
         (core.material as THREE.MeshStandardMaterial).emissiveIntensity =
-          p.coreIntensity + e[i]! * 2.4;
+          p.coreIntensity + e[i]! * 1.1;
       }
     }
 
@@ -315,17 +429,17 @@ export function Network({ quality }: { quality: QualityLevel }) {
 
   return (
     <group>
-      {/* Connections + dendrite tendrils — procedural warm filaments. */}
+      {/* Fibre graph — dark organic filaments, lit edges only, never neon. */}
       {tubes.map((tube) => (
         <mesh key={`tube-${tube.key}`} geometry={tube.geometry} frustumCulled={false}>
           <meshStandardMaterial
-            color="#8a7250"
-            emissive="#5a4326"
-            emissiveIntensity={tube.dendrite ? 0.55 : 0.7}
-            roughness={0.8}
-            metalness={0.1}
+            color={tube.layer === 'back' ? '#3f352a' : '#564735'}
+            emissive={tube.layer === 'link' ? '#4a3a26' : '#382c1c'}
+            emissiveIntensity={tube.layer === 'link' ? 0.5 : 0.35}
+            roughness={0.75}
+            metalness={0}
             transparent
-            opacity={tube.dendrite ? 0.6 : 0.85}
+            opacity={tube.layer === 'back' ? 0.4 : tube.layer === 'fine' ? 0.55 : 0.8}
             toneMapped
           />
         </mesh>
@@ -360,13 +474,16 @@ export function Network({ quality }: { quality: QualityLevel }) {
               color={NETWORK_CONFIG.palette.navNeuron}
               emissive={EMISSIVE}
               emissiveIntensity={p.coreIntensity}
-              roughness={0.35}
+              roughness={0.4}
               metalness={0}
-              toneMapped={false}
+              toneMapped
             />
           </mesh>
         </group>
       ))}
+
+      {/* Suspended dust — faint warm motes drifting in the haze (depth cue). */}
+      <Dust />
 
       {/* Core → neuron selection pulse. */}
       <mesh ref={pulseRef} visible={false}>
@@ -374,12 +491,44 @@ export function Network({ quality }: { quality: QualityLevel }) {
         <meshStandardMaterial
           color={EMISSIVE}
           emissive={EMISSIVE}
-          emissiveIntensity={2.6}
+          emissiveIntensity={1.8}
           roughness={0.4}
           metalness={0}
-          toneMapped={false}
+          toneMapped
         />
       </mesh>
     </group>
+  );
+}
+
+/** Sparse warm dust suspended through the depth range. Deterministic, static
+ *  (the camera parallax alone makes it drift), cheap: one Points draw call. */
+function Dust() {
+  const positions = useMemo(() => {
+    const rng = new SeededRandom(`${NETWORK_CONFIG.seed}-dust`);
+    const COUNT = 140;
+    const arr = new Float32Array(COUNT * 3);
+    for (let i = 0; i < COUNT; i += 1) {
+      arr[i * 3] = rng.range(-7, 7);
+      arr[i * 3 + 1] = rng.range(-4, 4);
+      arr[i * 3 + 2] = rng.range(-4.5, 2.5);
+    }
+    return arr;
+  }, []);
+
+  return (
+    <points>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        color="#8a7050"
+        size={0.03}
+        sizeAttenuation
+        transparent
+        opacity={0.5}
+        depthWrite={false}
+      />
+    </points>
   );
 }
