@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { SceneLighting } from '@/scenes/SceneLighting/SceneLighting';
 import { CameraRig } from '@/scenes/CameraRig/CameraRig';
@@ -38,7 +39,9 @@ export default function NeuralScene({ quality }: { quality: QualityLevel }) {
       <SceneLighting />
       <CameraRig />
       <NeuralTravel />
-      <Network quality={quality} />
+      <Suspense fallback={null}>
+        <Network quality={quality} />
+      </Suspense>
       <PostProcessing quality={quality} />
     </Canvas>
   );

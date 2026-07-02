@@ -40,3 +40,6 @@ next-env.d.ts
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# Large source 3D assets (optimized version committed under public/models/)
+/Meshy_AI_*.glb
