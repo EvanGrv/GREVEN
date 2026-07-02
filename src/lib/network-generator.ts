@@ -59,33 +59,31 @@ export function generateNetwork(quality: QualityLevel): NetworkModel {
   const rng = new SeededRandom(`${cfg.seed}:${quality}`);
   const nodes: NetworkNode[] = [];
 
-  // --- Navigation neurons: 5, stable, spread with jitter (not a perfect ring). ---
+  // --- Navigation neurons: 5, at explicit art-directed positions so they are
+  //     spread across the view and never hidden behind the GREVEN wordmark. ---
   const navCount = NEURON_SECTIONS.length;
-  const golden = Math.PI * (3 - Math.sqrt(5));
   for (let i = 0; i < navCount; i += 1) {
     const section = NEURON_SECTIONS[i]!;
-    const angle = i * golden + rng.range(-0.25, 0.25);
-    const band = cfg.navRadius + rng.range(-0.35, 0.35);
-    const depth = rng.range(-1, 1) * cfg.radius * cfg.depthScale * 0.5;
-    const base: Vec3 = [Math.cos(angle) * band, Math.sin(angle) * band * 0.72, depth];
+    const pos = cfg.navPositions[i]!;
+    const base: Vec3 = [pos[0], pos[1], pos[2]];
     const radius = rng.range(cfg.size.navNeuron[0], cfg.size.navNeuron[1]);
     nodes.push(makeNode('nav', base, radius, cfg.motion.navAmplitude, rng, section.id));
   }
 
-  // --- Secondary neurons: centre-dense cloud. ---
+  // --- Secondary neurons: centre-dense cloud, spread horizontally. ---
   for (let i = 0; i < counts.neurons; i += 1) {
     const t = Math.pow(rng.float(), cfg.centerDensity);
     const [x, y, z] = rng.onSphere(cfg.radius * t + 0.2, 0.3);
-    const base: Vec3 = [x, y, z * cfg.depthScale];
+    const base: Vec3 = [x * cfg.spreadX, y, z * cfg.depthScale];
     const radius = rng.range(cfg.size.neuron[0], cfg.size.neuron[1]);
     nodes.push(makeNode('neuron', base, radius, cfg.motion.neuronAmplitude, rng));
   }
 
-  // --- Synapses: diffuse, biased outward. ---
+  // --- Synapses: diffuse, biased outward, spread horizontally. ---
   for (let i = 0; i < counts.synapses; i += 1) {
     const t = Math.pow(rng.float(), 0.75);
     const [x, y, z] = rng.onSphere(cfg.radius * (0.5 + t * 0.7), 0.5);
-    const base: Vec3 = [x, y, z * cfg.depthScale];
+    const base: Vec3 = [x * cfg.spreadX, y, z * cfg.depthScale];
     const radius = rng.range(cfg.size.synapse[0], cfg.size.synapse[1]);
     nodes.push(makeNode('synapse', base, radius, cfg.motion.synapseAmplitude, rng));
   }
@@ -97,13 +95,16 @@ export function generateNetwork(quality: QualityLevel): NetworkModel {
 
   for (let i = 0; i < nodes.length; i += 1) {
     const a = nodes[i]!;
-    // Rank neighbours by distance.
+    // Rank neighbours by distance. Navigation neurons sit at the periphery, so
+    // they connect to their nearest nodes regardless of the radius cap — this
+    // guarantees each is wired in with long axons spanning the view.
+    const isNav = a.kind === 'nav';
     const neighbours: { j: number; d: number }[] = [];
     for (let j = 0; j < nodes.length; j += 1) {
       if (j === i) continue;
       const b = nodes[j]!;
       const d = len(sub(a.base, b.base));
-      if (d <= cfg.axon.connectRadius) neighbours.push({ j, d });
+      if (isNav || d <= cfg.axon.connectRadius) neighbours.push({ j, d });
     }
     neighbours.sort((p, q) => p.d - q.d);
 

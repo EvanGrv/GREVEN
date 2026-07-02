@@ -25,8 +25,24 @@ export const NETWORK_CONFIG = {
   depthScale: 0.8,
   /** Bias exponent toward the centre (>1 = denser core, diffuse periphery). */
   centerDensity: 1.7,
-  /** Radius band where the 5 navigation neurons sit. */
-  navRadius: 2.1,
+  /** Horizontal spread of the secondary cloud so it fills the wide viewport
+   *  instead of clustering in a central ball. */
+  spreadX: 1.45,
+
+  /**
+   * Explicit, art-directed positions (world units) for the 5 navigation
+   * neurons. Spread across the view — corners, top and the central gap — and
+   * kept clear of the GREVEN wordmark so a clickable neuron is never hidden
+   * behind the text (the network renders behind the HTML). Order matches
+   * NEURON_SECTIONS: Recherche, Projets, Publications, À propos, Contact.
+   */
+  navPositions: [
+    [-3.7, 2.05, 0.5], // Recherche    — upper left
+    [3.6, 1.8, -0.6], // Projets      — upper right
+    [3.8, -1.95, 0.35], // Publications — lower right
+    [-3.8, -1.85, -0.5], // À propos     — lower left
+    [0.15, 2.55, 0.8], // Contact      — top centre, above the wordmark
+  ] as [number, number, number][],
 
   motion: {
     neuronAmplitude: 0.16,
@@ -40,7 +56,7 @@ export const NETWORK_CONFIG = {
 
   axon: {
     /** Max distance between two nodes for them to connect. */
-    connectRadius: 1.65,
+    connectRadius: 1.95,
     /** Max connections grown from each node. */
     maxDegree: 3,
     /** Curvature of the axons (0 = straight). */
