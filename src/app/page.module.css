@@ -45,10 +45,18 @@
   gap: var(--space-6);
 }
 
+/* Absolutely centred on the viewport so the wordmark sits exactly at the level
+   of the central hub neuron (world origin → screen centre). */
 .center {
+  position: absolute;
+  top: 50%;
+  left: var(--page-margin);
+  right: var(--page-margin);
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2;
 }
 
 /* Soft, blurred scrim directly behind the wordmark to guarantee legibility
