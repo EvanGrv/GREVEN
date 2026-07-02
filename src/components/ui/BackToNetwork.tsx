@@ -10,7 +10,7 @@ import styles from './BackToNetwork.module.css';
 export function BackToNetwork({ href = '/' }: { href?: string }) {
   return (
     <Link href={href} className={styles.back}>
-      <EgMark size={22} framed={false} weight={5} />
+      <EgMark size={22} framed={false} />
       <span>retour au réseau</span>
     </Link>
   );

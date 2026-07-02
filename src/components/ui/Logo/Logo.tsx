@@ -21,10 +21,10 @@ export function Logo({ variant = 'full', href = '/', className }: LogoProps) {
       {variant === 'full' ? (
         <span className={styles.text}>
           <span className={styles.wordmark}>GREVEN</span>
-          <span className={styles.tagline}>AI Research Portfolio</span>
+          <span className={styles.tagline}>ML Research Portfolio</span>
         </span>
       ) : (
-        <span className="sr-only">GREVEN — AI Research Portfolio</span>
+        <span className="sr-only">GREVEN — ML Research Portfolio</span>
       )}
     </span>
   );

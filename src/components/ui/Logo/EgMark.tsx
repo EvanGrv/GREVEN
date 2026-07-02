@@ -1,9 +1,10 @@
 /**
  * EG monogram — Evan Greven.
- * A monoline "E" and "G" set inside a thin square, drawn as pure geometry so it
- * renders identically everywhere (no font dependency) and stays cleanly
- * editable. Colour follows `currentColor`; size and framing are configurable
- * for the header lockup, favicon, loader, mobile menu and back-to-network button.
+ * Two interlocked serif capitals (the display serif of the site) set inside a
+ * thin square: E anchored upper-left, G lower-right, overlapping on the
+ * diagonal, matching the supplied brand lockup. Rendered as inline SVG text so
+ * it stays vector-crisp, inherits `currentColor`, and uses the already-loaded
+ * Playfair face (Georgia fallback keeps the shape without it).
  */
 
 export interface EgMarkProps {
@@ -11,14 +12,12 @@ export interface EgMarkProps {
   size?: number;
   /** Draw the surrounding thin square. Off for the most compact contexts. */
   framed?: boolean;
-  /** Stroke weight of the letterforms, in viewBox units. */
-  weight?: number;
   /** Accessible title; omit for decorative use (defaults to aria-hidden). */
   title?: string;
   className?: string;
 }
 
-export function EgMark({ size = 40, framed = true, weight = 4, title, className }: EgMarkProps) {
+export function EgMark({ size = 40, framed = true, title, className }: EgMarkProps) {
   const decorative = !title;
   return (
     <svg
@@ -34,26 +33,18 @@ export function EgMark({ size = 40, framed = true, weight = 4, title, className 
     >
       {title ? <title>{title}</title> : null}
       {framed ? (
-        <rect
-          x={6}
-          y={6}
-          width={88}
-          height={88}
-          rx={1.5}
-          stroke="currentColor"
-          strokeWidth={1.5}
-          opacity={0.55}
-        />
+        <rect x={5} y={5} width={90} height={90} stroke="currentColor" strokeWidth={2.5} />
       ) : null}
-      <g stroke="currentColor" strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round">
-        {/* E */}
-        <path d="M26 34 V66" />
-        <path d="M26 34 H42" />
-        <path d="M26 50 H39" />
-        <path d="M26 66 H42" />
-        {/* G */}
-        <path d="M71 41 A15 15 0 1 0 71 59" />
-        <path d="M71 59 H59 V51" />
+      <g
+        fill="currentColor"
+        style={{ fontFamily: "var(--font-serif, 'Georgia', serif)", fontWeight: 500 }}
+      >
+        <text x={37} y={61} fontSize={54} textAnchor="middle">
+          E
+        </text>
+        <text x={62} y={86} fontSize={54} textAnchor="middle">
+          G
+        </text>
       </g>
     </svg>
   );

@@ -13,22 +13,22 @@
 .text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   line-height: 1;
 }
 
 .wordmark {
   font-family: var(--font-serif);
-  font-size: 1.05rem;
-  letter-spacing: 0.24em;
+  font-size: 1.2rem;
+  letter-spacing: 0.28em;
   color: var(--text-primary);
 }
 
 .tagline {
   font-size: 0.5625rem;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .link:hover .wordmark {

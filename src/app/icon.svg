@@ -1,12 +1,8 @@
 <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100" height="100" rx="20" fill="#24261E"/>
-  <rect x="14" y="14" width="72" height="72" rx="2" stroke="#F2D0A7" stroke-width="1.5" opacity="0.5"/>
-  <g stroke="#F2D0A7" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M28 36 V64"/>
-    <path d="M28 36 H43"/>
-    <path d="M28 50 H40"/>
-    <path d="M28 64 H43"/>
-    <path d="M71 42 A14 14 0 1 0 71 58"/>
-    <path d="M71 58 H59 V51"/>
+  <rect width="100" height="100" rx="20" fill="#1c1e19"/>
+  <rect x="13" y="13" width="74" height="74" stroke="#b59d7c" stroke-width="2.5"/>
+  <g fill="#b59d7c" font-family="Georgia, 'Times New Roman', serif" font-weight="500">
+    <text x="39" y="59" font-size="44" text-anchor="middle">E</text>
+    <text x="60" y="80" font-size="44" text-anchor="middle">G</text>
   </g>
 </svg>
