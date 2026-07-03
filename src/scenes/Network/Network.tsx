@@ -188,14 +188,15 @@ export function Network({ quality }: { quality: QualityLevel }) {
       rng.range(0.92, 1.12),
     ];
 
-    // Central neuron — the round soma, the anchor of the composition.
+    // Central neuron — the lobed soma (the least spherical of the three
+    // heads), stretched further: a star-cell body, never a ball.
     out.push({
       key: 'center',
       position: new THREE.Vector3(0, 0, 0),
-      variant: 'a',
+      variant: 'c',
       rotation: new THREE.Euler(-0.16, 0.22, 0.05),
-      meshScale: scaleFor('a', CENTER_TARGET_R),
-      stretch: [1.08, 0.94, 1.04],
+      meshScale: scaleFor('c', CENTER_TARGET_R),
+      stretch: [1.14, 0.88, 1.06],
       coreRadius: 0.12,
       coreIntensity: 0.75,
       wobble: 0.02,
