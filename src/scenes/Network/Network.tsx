@@ -51,20 +51,11 @@ const DECO_LAYOUT: { p: [number, number, number]; r: number; connect: boolean }[
   { p: [4.9, 2.55, 1.9], r: 0.26, connect: false }, // blurred foreground, right
 ];
 
-/** Long, thin fibres in the depths — they radiate outward from behind the
- *  central mass (never criss-crossing the frame) so even the background obeys
- *  the reference's centre-out structure. */
-const BACK_FIBER_COUNT = 6;
-/** Free-ending tendrils radiating from the central mass. */
-const TENDRIL_COUNT = 14;
-
-/** Discreet branch systems near the left edge (the mockup keeps its corners
- *  almost empty — just a faint ramification top-left and bottom-left). Their
- *  arms point INWARD, continuing the centre-out flow of the composition. */
-const EDGE_SYSTEMS: [number, number, number][] = [
-  [-4.6, 2.3, -1.6],
-  [-4.9, -2.3, -1.5],
-];
+/** Free-ending tendrils radiating from the central mass. The mockup's whole
+ *  network is ONE tree: the central soma's dendrites plus the cells sitting on
+ *  them — the background stays empty (no crossing filaments, no edge systems,
+ *  no lateral cell-to-cell wires), which is what makes it read structured. */
+const TENDRIL_COUNT = 9;
 
 const EMISSIVE = NETWORK_CONFIG.palette.emissive;
 
@@ -135,17 +126,6 @@ function taperedTube(
   }
   geo.computeVertexNormals();
   return geo;
-}
-
-/** Warm filament (axon or dendrite) between two points in the network. */
-function buildFiber(
-  start: THREE.Vector3,
-  end: THREE.Vector3,
-  rng: SeededRandom,
-  r0 = 0.014,
-  r1 = r0 * 0.45,
-): THREE.BufferGeometry {
-  return taperedTube(makeFiberCurve(start, end, rng), 26, r0, r1);
 }
 
 /** A finer sub-branch leaving a parent fibre part-way along, wandering off in
@@ -305,35 +285,13 @@ export function Network({ quality }: { quality: QualityLevel }) {
       if (rng.float() < 0.85) pushBranch(`br-${p.key}`, curve, 0.01, 'fine');
     });
 
-    // Neuron ↔ neuron web: each connected node also reaches its nearest
-    // neighbour, so the network reads as a distributed mesh, not a star.
-    connected.forEach((p, i) => {
-      let nearest: Placement | null = null;
-      let best = Infinity;
-      connected.forEach((q, j) => {
-        if (j <= i) return;
-        const d = p.position.distanceToSquared(q.position);
-        if (d < best) {
-          best = d;
-          nearest = q;
-        }
-      });
-      if (nearest) {
-        list.push({
-          key: `web-${p.key}`,
-          geometry: buildFiber(p.position, (nearest as Placement).position, rng, 0.016, 0.008),
-          layer: 'fine',
-        });
-      }
-    });
-
     // Dendrite crowns: every cell body sprouts a few short processes of its
     // own (thick at the membrane, tapering fast), so each neuron reads as a
     // living cell rather than a bead threaded on a wire — as in the reference.
     placements.forEach((p, i) => {
       if (p.key === 'center' || !p.showMesh) return; // centre has its full set
       const somaR = p.meshScale * geoOf(p.variant).radius;
-      const n = rng.int(2, 4);
+      const n = rng.int(2, 3);
       // Processes continue the radial flow: they mostly point AWAY from the
       // centre (the fibre "passes through" the cell and keeps going outward).
       const outward = p.position.clone().normalize();
@@ -378,57 +336,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
       if (rng.float() < 0.8) pushBranch(`dend-br-${i}`, curve, 0.008, 'fine');
     }
 
-    // Independent edge systems: small dendrite trees rooted near the corners,
-    // never touching the centre — they make the frame feel inhabited edge to
-    // edge, exactly like the reference board.
-    EDGE_SYSTEMS.forEach((root, s) => {
-      const origin = new THREE.Vector3(...root);
-      const arms = 3;
-      for (let i = 0; i < arms; i += 1) {
-        const dir = new THREE.Vector3(
-          rng.range(-1, 1) - origin.x * 0.12,
-          rng.range(-1, 1) - origin.y * 0.12,
-          rng.range(-0.4, 0.4),
-        );
-        if (dir.lengthSq() < 1e-4) dir.set(0, 1, 0);
-        dir.normalize();
-        const end = origin.clone().addScaledVector(dir, rng.range(1.2, 2.4));
-        const curve = makeFiberCurve(origin, end, rng);
-        list.push({
-          key: `edge-${s}-${i}`,
-          geometry: taperedTube(curve, 20, 0.012, 0.004, 6),
-          layer: 'fine',
-        });
-        ends.push({ p: end, r: rng.range(0.022, 0.045) });
-        if (rng.float() < 0.6) pushBranch(`edge-br-${s}-${i}`, curve, 0.006, 'fine');
-      }
-    });
-
-    // Deep filaments — they too radiate from behind the central mass toward
-    // the frame edges, so the hazy depths echo the same centre-out structure
-    // instead of criss-crossing at random.
-    for (let i = 0; i < BACK_FIBER_COUNT; i += 1) {
-      const angle = (i / BACK_FIBER_COUNT) * Math.PI * 2 + rng.range(-0.4, 0.4);
-      const start = new THREE.Vector3(
-        rng.range(-0.9, 0.9),
-        rng.range(-0.6, 0.6),
-        rng.range(-3.4, -2.4),
-      );
-      const end = new THREE.Vector3(
-        Math.cos(angle) * rng.range(4.5, 6.5),
-        Math.sin(angle) * rng.range(2.2, 3.4),
-        rng.range(-4.4, -2.4),
-      );
-      const curve = makeFiberCurve(start, end, rng);
-      list.push({
-        key: `back-${i}`,
-        geometry: taperedTube(curve, 26, 0.014, 0.006),
-        layer: 'back',
-      });
-      pushBranch(`back-br-${i}`, curve, 0.007, 'back');
-    }
-
-    // Merge the ~75 individual fibres into ONE geometry per layer: 3 draw
+    // Merge the individual fibres into ONE geometry per layer: 3 draw
     // calls instead of 75, which matters far more for energy use than the
     // triangle count. The fibres are static, so nothing is lost.
     const layers = ['link', 'fine', 'back'] as const;
@@ -752,7 +660,7 @@ function Dust() {
 
   const positions = useMemo(() => {
     const rng = new SeededRandom(`${NETWORK_CONFIG.seed}-dust`);
-    const COUNT = 140;
+    const COUNT = 90;
     const arr = new Float32Array(COUNT * 3);
     for (let i = 0; i < COUNT; i += 1) {
       arr[i * 3] = rng.range(-7, 7);
@@ -772,7 +680,7 @@ function Dust() {
         size={0.03}
         sizeAttenuation
         transparent
-        opacity={0.5}
+        opacity={0.38}
         depthWrite={false}
       />
     </points>
