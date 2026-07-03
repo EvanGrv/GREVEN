@@ -51,19 +51,19 @@ const DECO_LAYOUT: { p: [number, number, number]; r: number; connect: boolean }[
   { p: [4.9, 2.55, 1.9], r: 0.26, connect: false }, // blurred foreground, right
 ];
 
-/** Long, thin fibres crossing the frame far behind the focal plane: the
- *  distributed organic network the reference shows in its depths. */
-const BACK_FIBER_COUNT = 10;
+/** Long, thin fibres in the depths — they radiate outward from behind the
+ *  central mass (never criss-crossing the frame) so even the background obeys
+ *  the reference's centre-out structure. */
+const BACK_FIBER_COUNT = 6;
 /** Free-ending tendrils radiating from the central mass. */
 const TENDRIL_COUNT = 14;
 
-/** Independent branch systems seeded near the frame edges — in the reference,
- *  the corners carry their own ramifications that never reach the centre. */
+/** Discreet branch systems near the left edge (the mockup keeps its corners
+ *  almost empty — just a faint ramification top-left and bottom-left). Their
+ *  arms point INWARD, continuing the centre-out flow of the composition. */
 const EDGE_SYSTEMS: [number, number, number][] = [
   [-4.6, 2.3, -1.6],
-  [4.7, 2.5, -1.9],
   [-4.9, -2.3, -1.5],
-  [4.8, -2.1, -1.4],
 ];
 
 const EMISSIVE = NETWORK_CONFIG.palette.emissive;
@@ -98,7 +98,8 @@ function makeFiberCurve(
   const perp = new THREE.Vector3(-dir.y, dir.x, dir.z * 0.4);
   if (perp.lengthSq() < 1e-4) perp.set(0, 1, 0);
   perp.normalize();
-  const amp = len * 0.2;
+  // Gentle, purposeful curvature — the reference fibres flow, never swoop.
+  const amp = len * 0.11;
   const c1 = start
     .clone()
     .addScaledVector(dir, 0.34)
@@ -266,10 +267,18 @@ export function Network({ quality }: { quality: QualityLevel }) {
     /** Main axon curves, kept so idle signal pulses can travel along them. */
     const axons: THREE.CubicBezierCurve3[] = [];
 
-    const offsetOrigin = () =>
-      new THREE.Vector3(rng.range(-1, 1), rng.range(-1, 1), rng.range(-0.6, 0.6))
+    // Fibres leave the central soma on the side FACING their target (with a
+    // little jitter so they don't share one point): every path radiates
+    // outward and none cross back through the middle — the structured
+    // centre-out tree of the mockup.
+    const originToward = (target: THREE.Vector3) =>
+      target
+        .clone()
         .normalize()
-        .multiplyScalar(rng.range(0.3, 0.6));
+        .multiplyScalar(rng.range(0.3, 0.5))
+        .add(
+          new THREE.Vector3(rng.range(-0.14, 0.14), rng.range(-0.14, 0.14), rng.range(-0.1, 0.1)),
+        );
 
     const pushBranch = (
       key: string,
@@ -286,7 +295,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
     // an occasional finer branch escaping part-way along.
     const connected = placements.filter((p) => p.connect);
     connected.forEach((p) => {
-      const curve = makeFiberCurve(offsetOrigin(), p.position, rng);
+      const curve = makeFiberCurve(originToward(p.position), p.position, rng);
       list.push({
         key: p.key,
         geometry: taperedTube(curve, 26, 0.034, 0.011, 8),
@@ -325,8 +334,16 @@ export function Network({ quality }: { quality: QualityLevel }) {
       if (p.key === 'center' || !p.showMesh) return; // centre has its full set
       const somaR = p.meshScale * geoOf(p.variant).radius;
       const n = rng.int(2, 4);
+      // Processes continue the radial flow: they mostly point AWAY from the
+      // centre (the fibre "passes through" the cell and keeps going outward).
+      const outward = p.position.clone().normalize();
       for (let k = 0; k < n; k += 1) {
-        const dir = new THREE.Vector3(rng.range(-1, 1), rng.range(-1, 1), rng.range(-0.5, 0.5));
+        const dir = outward
+          .clone()
+          .multiplyScalar(k === 0 ? 1 : 0.55)
+          .add(
+            new THREE.Vector3(rng.range(-0.6, 0.6), rng.range(-0.6, 0.6), rng.range(-0.35, 0.35)),
+          );
         if (dir.lengthSq() < 1e-4) dir.set(1, 0, 0);
         dir.normalize();
         const start = p.position.clone().addScaledVector(dir, somaR * 0.5);
@@ -344,14 +361,14 @@ export function Network({ quality }: { quality: QualityLevel }) {
     // Free-ending tendrils from the central soma — thin, asymmetric, half of
     // them forking once, so the central neuron reads as a living dendrite tree.
     for (let i = 0; i < TENDRIL_COUNT; i += 1) {
-      const angle = (i / TENDRIL_COUNT) * Math.PI * 2 + rng.range(-0.6, 0.6);
+      const angle = (i / TENDRIL_COUNT) * Math.PI * 2 + rng.range(-0.35, 0.35);
       const len = rng.range(1.6, 3.1);
       const end = new THREE.Vector3(
         Math.cos(angle) * len,
         Math.sin(angle) * len * rng.range(0.6, 1),
         rng.range(-0.8, 0.4),
       );
-      const curve = makeFiberCurve(offsetOrigin(), end, rng);
+      const curve = makeFiberCurve(originToward(end), end, rng);
       list.push({
         key: `dend-${i}`,
         geometry: taperedTube(curve, 26, 0.024, 0.005, 6),
@@ -387,15 +404,20 @@ export function Network({ quality }: { quality: QualityLevel }) {
       }
     });
 
-    // Deep crossing filaments — the hazy ramified background of the reference —
-    // each with a branch so the depths look grown, not drawn.
+    // Deep filaments — they too radiate from behind the central mass toward
+    // the frame edges, so the hazy depths echo the same centre-out structure
+    // instead of criss-crossing at random.
     for (let i = 0; i < BACK_FIBER_COUNT; i += 1) {
-      const y1 = rng.range(-3, 3);
-      const start = new THREE.Vector3(rng.range(-7.5, -2), y1, rng.range(-4.5, -2.2));
+      const angle = (i / BACK_FIBER_COUNT) * Math.PI * 2 + rng.range(-0.4, 0.4);
+      const start = new THREE.Vector3(
+        rng.range(-0.9, 0.9),
+        rng.range(-0.6, 0.6),
+        rng.range(-3.4, -2.4),
+      );
       const end = new THREE.Vector3(
-        rng.range(2, 7.5),
-        y1 + rng.range(-2.4, 2.4),
-        rng.range(-4.5, -2.2),
+        Math.cos(angle) * rng.range(4.5, 6.5),
+        Math.sin(angle) * rng.range(2.2, 3.4),
+        rng.range(-4.4, -2.4),
       );
       const curve = makeFiberCurve(start, end, rng);
       list.push({
