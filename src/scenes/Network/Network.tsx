@@ -182,10 +182,12 @@ export function Network({ quality }: { quality: QualityLevel }) {
     const scaleFor = (v: Variant, targetR: number) => targetR / geoOf(v).radius;
     const randRot = () =>
       new THREE.Euler(rng.range(-0.5, 0.5), rng.range(-Math.PI, Math.PI), rng.range(-0.4, 0.4));
+    // Always flattened and widened (x/z up, y down) so no soma can present a
+    // spherical silhouette from any angle the camera reaches.
     const randStretch = (): [number, number, number] => [
-      rng.range(0.92, 1.12),
-      rng.range(0.86, 1.06),
-      rng.range(0.92, 1.12),
+      rng.range(1.06, 1.24),
+      rng.range(0.78, 0.9),
+      rng.range(0.96, 1.16),
     ];
 
     // Central neuron — the lobed soma (the least spherical of the three
@@ -206,8 +208,9 @@ export function Network({ quality }: { quality: QualityLevel }) {
 
     // Five clickable secondary neurons: a small soma head each (variants
     // mixed, sizes slightly varied) with a nucleus glowing through the
-    // membrane — real cells on the branches, as in the reference.
-    const navVariants: Variant[] = ['b', 'c', 'a', 'c', 'b'];
+    // membrane — real cells on the branches, as in the reference. Only the
+    // ovoid and lobed heads are used: the round 'a' reads as a ball.
+    const navVariants: Variant[] = ['c', 'b', 'c', 'b', 'c'];
     NEURON_SECTIONS.forEach((section, i) => {
       const v = navVariants[i]!;
       out.push({
