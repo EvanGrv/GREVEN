@@ -10,7 +10,7 @@ import { PostProcessing } from '@/scenes/PostProcessing/PostProcessing';
 import { NeuralTravel } from '@/transitions/NeuralTravel';
 import { usePointerParallax } from '@/hooks/usePointerParallax';
 import { maxDprFor } from '@/lib/device-detect';
-import type { QualityLevel } from '@/stores/sceneStore';
+import { useSceneStore, type QualityLevel } from '@/stores/sceneStore';
 
 /** Deep, warm background baked into the scene. Rendering opaque keeps the bloom
  *  compositor correct and matches the reference's flat, mineral darkness. */
@@ -30,6 +30,7 @@ export default function NeuralScene({ quality }: { quality: QualityLevel }) {
   // PerformanceMonitor steps the pixel ratio down (and back up when it
   // recovers) so the scene stays smooth instead of draining the battery.
   const [dpr, setDpr] = useState(maxDprFor(quality));
+  const setQuality = useSceneStore((s) => s.setQuality);
 
   return (
     <Canvas
@@ -42,7 +43,13 @@ export default function NeuralScene({ quality }: { quality: QualityLevel }) {
       }}
     >
       <PerformanceMonitor
-        onDecline={() => setDpr((d) => Math.max(1, d - 0.2))}
+        onDecline={() => {
+          // Resolution already at the floor and still dropping frames: shed
+          // the expensive high-only effects (transmission, DoF) by demoting
+          // the tier — max quality for those who can hold it, smooth for all.
+          if (dpr <= 1.01 && quality === 'high') setQuality('medium');
+          setDpr((d) => Math.max(1, d - 0.2));
+        }}
         onIncline={() => setDpr((d) => Math.min(maxDprFor(quality), d + 0.2))}
       />
       <color attach="background" args={[SCENE_BG]} />

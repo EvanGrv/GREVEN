@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { detectQuality, isWebGLAvailable } from '@/lib/device-detect';
+import { detectQuality, isWebGLAvailable, qualityOverride } from '@/lib/device-detect';
 import { useSceneStore } from '@/stores/sceneStore';
 import { useReducedMotion } from './useReducedMotion';
 
@@ -22,7 +22,7 @@ export function useSceneCapabilities(): {
 
   useEffect(() => {
     setWebglAvailable(isWebGLAvailable());
-    setQuality(detectQuality());
+    setQuality(qualityOverride() ?? detectQuality());
   }, [setWebglAvailable, setQuality]);
 
   return { webglAvailable, quality, reducedMotion };

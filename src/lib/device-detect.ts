@@ -25,6 +25,14 @@ interface NavigatorWithHints extends Navigator {
   deviceMemory?: number;
 }
 
+/** Explicit tier override from the URL (`?quality=high|medium|low`) — lets a
+ *  visitor (or a test session) force a tier past the heuristic. */
+export function qualityOverride(): QualityLevel | null {
+  if (typeof window === 'undefined') return null;
+  const q = new URLSearchParams(window.location.search).get('quality');
+  return q === 'high' || q === 'medium' || q === 'low' ? q : null;
+}
+
 /** Choose an adaptive quality tier from coarse device signals. */
 export function detectQuality(): QualityLevel {
   if (typeof window === 'undefined') return 'medium';

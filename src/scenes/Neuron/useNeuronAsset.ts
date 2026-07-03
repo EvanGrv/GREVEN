@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
+import { useSceneStore } from '@/stores/sceneStore';
 
 const MODEL_A_URL = '/models/soma-a.glb';
 const MODEL_B_URL = '/models/soma-b.glb';
@@ -57,6 +58,7 @@ export function useNeuronAsset(): NeuronAssets {
   const gltfA = useGLTF(MODEL_A_URL);
   const gltfB = useGLTF(MODEL_B_URL);
   const gltfC = useGLTF(MODEL_C_URL);
+  const quality = useSceneStore((s) => s.quality);
 
   return useMemo(() => {
     const material = new THREE.MeshPhysicalMaterial({
@@ -84,6 +86,21 @@ export function useNeuronAsset(): NeuronAssets {
       side: THREE.FrontSide,
       toneMapped: true,
     });
+
+    // High tier only: REAL transmission — the renderer refracts what sits
+    // behind each membrane (nucleus, fibres, letters' backdrop) through the
+    // frosted cell wall. This is the one genuinely expensive effect (the
+    // scene renders into a transmission buffer every frame), which is why it
+    // is gated to 'high' and why NeuralScene demotes the tier if the frame
+    // rate can't hold — everyone else keeps the free in-shader translucency.
+    if (quality === 'high') {
+      material.transmission = 0.55;
+      material.thickness = 0.55;
+      material.attenuationColor = new THREE.Color('#8a7050');
+      material.attenuationDistance = 1.6;
+      material.transparent = false;
+      material.opacity = 1;
+    }
 
     // Two-layer translucency, all in-shader (no transmission pass, so it
     // costs nothing): a tight fresnel rim draws the lit edge of the membrane,
@@ -124,7 +141,7 @@ uniform float uSssStrength;`,
       c: prepareGeometry(gltfC.scene),
       material,
     };
-  }, [gltfA, gltfB, gltfC]);
+  }, [gltfA, gltfB, gltfC, quality]);
 }
 
 useGLTF.preload(MODEL_A_URL);
