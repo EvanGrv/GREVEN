@@ -43,7 +43,9 @@ export const NETWORK_CONFIG = {
     [2.5, 1.9, -0.3], // Projets      — upper right cluster
     [3.5, -1.1, 0.2], // Publications — right, below the midline
     [-3.4, -1.6, -0.4], // À propos     — lower left
-    [0.05, 0.0, 1.05], // Contact      — central hub in the GRE·VEN gap
+    [0.55, -1.5, 0.5], // Contact      — small cell just below the central soma
+    // (kept OFF the camera axis of the centre neuron: at [~0,0,z>0] it used to
+    // project exactly onto the big soma and read as a second neuron in front)
   ] as [number, number, number][],
 
   motion: {

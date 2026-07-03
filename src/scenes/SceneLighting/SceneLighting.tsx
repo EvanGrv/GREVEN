@@ -13,7 +13,7 @@ export function SceneLighting() {
       <ambientLight color="#343328" intensity={0.4} />
 
       {/* Soft warm key, front-upper-left — patined beige, never white. */}
-      <directionalLight color="#b79a72" intensity={0.9} position={[-4, 6, 8]} />
+      <directionalLight color="#b79a72" intensity={1.15} position={[-4, 6, 8]} />
 
       {/* Warm rim from below-right (Seal Brown) for depth. */}
       <pointLight color="#65371f" intensity={9} distance={40} decay={2} position={[6, -4, -6]} />

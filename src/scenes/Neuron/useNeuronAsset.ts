@@ -68,19 +68,19 @@ export function useNeuronAsset(): NeuronAssets {
       // living membrane, never plastic or metal.
       color: new THREE.Color('#524434'),
       emissive: new THREE.Color('#2b2115'),
-      emissiveIntensity: 0.45,
-      roughness: 0.48,
+      emissiveIntensity: 0.42,
+      roughness: 0.58,
       metalness: 0,
-      clearcoat: 0.35,
-      clearcoatRoughness: 0.45,
-      sheen: 0.55,
+      clearcoat: 0.12,
+      clearcoatRoughness: 0.6,
+      sheen: 0.32,
       sheenRoughness: 0.65,
       sheenColor: new THREE.Color('#b79a72'),
       ior: 1.38,
-      specularIntensity: 0.55,
-      envMapIntensity: 0.7,
+      specularIntensity: 0.32,
+      envMapIntensity: 0.55,
       transparent: true,
-      opacity: 0.94,
+      opacity: 0.97,
       side: THREE.FrontSide,
       toneMapped: true,
     });
@@ -90,8 +90,8 @@ export function useNeuronAsset(): NeuronAssets {
     // dark), which reads as a translucent organic membrane, never clay.
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uRimColor = { value: new THREE.Color('#b79a72') };
-      shader.uniforms.uRimPower = { value: 2.6 };
-      shader.uniforms.uRimStrength = { value: 0.9 };
+      shader.uniforms.uRimPower = { value: 3.2 };
+      shader.uniforms.uRimStrength = { value: 0.55 };
       shader.fragmentShader = shader.fragmentShader
         .replace(
           '#include <common>',

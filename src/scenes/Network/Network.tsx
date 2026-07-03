@@ -55,7 +55,7 @@ const DECO_LAYOUT: { p: [number, number, number]; r: number; connect: boolean }[
  *  distributed organic network the reference shows in its depths. */
 const BACK_FIBER_COUNT = 10;
 /** Free-ending tendrils radiating from the central mass. */
-const TENDRIL_COUNT = 10;
+const TENDRIL_COUNT = 14;
 
 /** Independent branch systems seeded near the frame edges — in the reference,
  *  the corners carry their own ramifications that never reach the centre. */
@@ -204,8 +204,8 @@ export function Network({ quality }: { quality: QualityLevel }) {
       variant: 'a',
       rotation: new THREE.Euler(-0.16, 0.22, 0.05),
       meshScale: scaleFor('a', CENTER_TARGET_R),
-      coreRadius: 0.2,
-      coreIntensity: 1.15,
+      coreRadius: 0.12,
+      coreIntensity: 0.75,
       wobble: 0.02,
       connect: false,
       showMesh: true,
@@ -224,8 +224,8 @@ export function Network({ quality }: { quality: QualityLevel }) {
         variant: v,
         rotation: randRot(),
         meshScale: scaleFor(v, NAV_TARGET_R * rng.range(0.85, 1.2)),
-        coreRadius: 0.12,
-        coreIntensity: 1.2,
+        coreRadius: 0.07,
+        coreIntensity: 0.85,
         wobble: 0.05,
         connect: true,
         showMesh: true,
@@ -242,8 +242,8 @@ export function Network({ quality }: { quality: QualityLevel }) {
         variant: v,
         rotation: randRot(),
         meshScale: scaleFor(v, d.r * rng.range(0.9, 1.1)),
-        coreRadius: d.r * 0.28,
-        coreIntensity: 0.6,
+        coreRadius: d.r * 0.18,
+        coreIntensity: 0.35,
         wobble: 0.06,
         connect: d.connect,
         showMesh: true,
@@ -289,11 +289,11 @@ export function Network({ quality }: { quality: QualityLevel }) {
       const curve = makeFiberCurve(offsetOrigin(), p.position, rng);
       list.push({
         key: p.key,
-        geometry: taperedTube(curve, 26, 0.016, 0.007),
+        geometry: taperedTube(curve, 26, 0.034, 0.011, 8),
         layer: 'link',
       });
       axons.push(curve);
-      if (rng.float() < 0.7) pushBranch(`br-${p.key}`, curve, 0.005, 'fine');
+      if (rng.float() < 0.85) pushBranch(`br-${p.key}`, curve, 0.01, 'fine');
     });
 
     // Neuron ↔ neuron web: each connected node also reaches its nearest
@@ -312,9 +312,32 @@ export function Network({ quality }: { quality: QualityLevel }) {
       if (nearest) {
         list.push({
           key: `web-${p.key}`,
-          geometry: buildFiber(p.position, (nearest as Placement).position, rng, 0.008, 0.005),
+          geometry: buildFiber(p.position, (nearest as Placement).position, rng, 0.016, 0.008),
           layer: 'fine',
         });
+      }
+    });
+
+    // Dendrite crowns: every cell body sprouts a few short processes of its
+    // own (thick at the membrane, tapering fast), so each neuron reads as a
+    // living cell rather than a bead threaded on a wire — as in the reference.
+    placements.forEach((p, i) => {
+      if (p.key === 'center' || !p.showMesh) return; // centre has its full set
+      const somaR = p.meshScale * geoOf(p.variant).radius;
+      const n = rng.int(2, 4);
+      for (let k = 0; k < n; k += 1) {
+        const dir = new THREE.Vector3(rng.range(-1, 1), rng.range(-1, 1), rng.range(-0.5, 0.5));
+        if (dir.lengthSq() < 1e-4) dir.set(1, 0, 0);
+        dir.normalize();
+        const start = p.position.clone().addScaledVector(dir, somaR * 0.5);
+        const end = p.position.clone().addScaledVector(dir, somaR + rng.range(0.45, 1.0));
+        const curve = makeFiberCurve(start, end, rng);
+        list.push({
+          key: `crown-${i}-${k}`,
+          geometry: taperedTube(curve, 14, 0.013, 0.003, 5),
+          layer: 'fine',
+        });
+        ends.push({ p: end, r: rng.range(0.015, 0.03) });
       }
     });
 
@@ -331,11 +354,11 @@ export function Network({ quality }: { quality: QualityLevel }) {
       const curve = makeFiberCurve(offsetOrigin(), end, rng);
       list.push({
         key: `dend-${i}`,
-        geometry: taperedTube(curve, 26, 0.006, 0.002, 5),
+        geometry: taperedTube(curve, 26, 0.024, 0.005, 6),
         layer: 'fine',
       });
       ends.push({ p: end, r: rng.range(0.02, 0.04) });
-      if (rng.float() < 0.65) pushBranch(`dend-br-${i}`, curve, 0.003, 'fine');
+      if (rng.float() < 0.8) pushBranch(`dend-br-${i}`, curve, 0.008, 'fine');
     }
 
     // Independent edge systems: small dendrite trees rooted near the corners,
@@ -356,11 +379,11 @@ export function Network({ quality }: { quality: QualityLevel }) {
         const curve = makeFiberCurve(origin, end, rng);
         list.push({
           key: `edge-${s}-${i}`,
-          geometry: taperedTube(curve, 20, 0.006, 0.0025, 5),
+          geometry: taperedTube(curve, 20, 0.012, 0.004, 6),
           layer: 'fine',
         });
         ends.push({ p: end, r: rng.range(0.022, 0.045) });
-        if (rng.float() < 0.6) pushBranch(`edge-br-${s}-${i}`, curve, 0.004, 'fine');
+        if (rng.float() < 0.6) pushBranch(`edge-br-${s}-${i}`, curve, 0.006, 'fine');
       }
     });
 
@@ -377,10 +400,10 @@ export function Network({ quality }: { quality: QualityLevel }) {
       const curve = makeFiberCurve(start, end, rng);
       list.push({
         key: `back-${i}`,
-        geometry: taperedTube(curve, 26, 0.009, 0.004),
+        geometry: taperedTube(curve, 26, 0.014, 0.006),
         layer: 'back',
       });
-      pushBranch(`back-br-${i}`, curve, 0.005, 'back');
+      pushBranch(`back-br-${i}`, curve, 0.007, 'back');
     }
 
     // Merge the ~75 individual fibres into ONE geometry per layer: 3 draw
@@ -396,7 +419,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
     });
 
     return { tubes: mergedTubes, tips: ends, linkCurves: axons };
-  }, [placements]);
+  }, [placements, geoOf]);
 
   useEffect(() => {
     // Merged fibre geometries are generated; release them when recomposed.
@@ -563,7 +586,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
           linkCurves[st.curve]!.getPoint(progress, scratch.cur);
           idle.position.copy(scratch.cur);
           // Swells mid-travel, fades at both ends.
-          idle.scale.setScalar(0.045 + Math.sin(progress * Math.PI) * 0.03);
+          idle.scale.setScalar(0.03 + Math.sin(progress * Math.PI) * 0.018);
           idle.visible = true;
         } else {
           idle.visible = false;
@@ -602,11 +625,11 @@ export function Network({ quality }: { quality: QualityLevel }) {
           <meshStandardMaterial
             color={tube.layer === 'back' ? '#3f352a' : '#564735'}
             emissive={tube.layer === 'link' ? '#4a3a26' : '#382c1c'}
-            emissiveIntensity={tube.layer === 'link' ? 0.6 : 0.45}
+            emissiveIntensity={tube.layer === 'link' ? 0.5 : 0.4}
             roughness={0.75}
             metalness={0}
             transparent
-            opacity={tube.layer === 'back' ? 0.4 : tube.layer === 'fine' ? 0.55 : 0.8}
+            opacity={tube.layer === 'back' ? 0.5 : tube.layer === 'fine' ? 0.78 : 0.95}
             toneMapped
           />
         </mesh>
@@ -657,17 +680,18 @@ export function Network({ quality }: { quality: QualityLevel }) {
       {/* Suspended dust — faint warm motes drifting in the haze (depth cue). */}
       <Dust />
 
-      {/* Idle signal charge travelling along a random axon. */}
+      {/* Idle signal charge travelling along a random axon — a faint ember
+          sliding under the membrane, never a bright bulb. */}
       <mesh ref={idlePulseRef} visible={false}>
         <sphereGeometry args={[1, 10, 10]} />
         <meshStandardMaterial
           color={EMISSIVE}
           emissive={EMISSIVE}
-          emissiveIntensity={1.5}
+          emissiveIntensity={0.8}
           roughness={0.4}
           metalness={0}
           transparent
-          opacity={0.85}
+          opacity={0.6}
           toneMapped
         />
       </mesh>
