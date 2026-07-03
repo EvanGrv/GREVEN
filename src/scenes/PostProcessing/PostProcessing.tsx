@@ -27,8 +27,8 @@ export function PostProcessing({ quality }: { quality: QualityLevel }) {
     return (
       <EffectComposer multisampling={2} enableNormalPass={false}>
         <Bloom
-          intensity={0.45}
-          luminanceThreshold={0.5}
+          intensity={0.55}
+          luminanceThreshold={0.48}
           luminanceSmoothing={0.85}
           mipmapBlur
           radius={0.7}
@@ -44,8 +44,8 @@ export function PostProcessing({ quality }: { quality: QualityLevel }) {
   return (
     <EffectComposer multisampling={0} enableNormalPass={false}>
       <Bloom
-        intensity={0.4}
-        luminanceThreshold={0.5}
+        intensity={0.45}
+        luminanceThreshold={0.48}
         luminanceSmoothing={0.85}
         mipmapBlur
         radius={0.7}

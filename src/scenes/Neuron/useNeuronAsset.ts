@@ -85,27 +85,35 @@ export function useNeuronAsset(): NeuronAssets {
       toneMapped: true,
     });
 
-    // Fresnel rim glow: the smooth spheroids catch a warm patined-beige light
-    // on their grazing edges (vNormal is view-space, so facing surfaces stay
-    // dark), which reads as a translucent organic membrane, never clay.
+    // Two-layer translucency, all in-shader (no transmission pass, so it
+    // costs nothing): a tight fresnel rim draws the lit edge of the membrane,
+    // and a wider, softer halo band beneath it fakes light scattering through
+    // the cell wall — the subsurface depth of a real cinematic render.
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uRimColor = { value: new THREE.Color('#b79a72') };
       shader.uniforms.uRimPower = { value: 3.2 };
       shader.uniforms.uRimStrength = { value: 0.55 };
+      shader.uniforms.uSssColor = { value: new THREE.Color('#8a7050') };
+      shader.uniforms.uSssStrength = { value: 0.35 };
       shader.fragmentShader = shader.fragmentShader
         .replace(
           '#include <common>',
           `#include <common>
 uniform vec3 uRimColor;
 uniform float uRimPower;
-uniform float uRimStrength;`,
+uniform float uRimStrength;
+uniform vec3 uSssColor;
+uniform float uSssStrength;`,
         )
         .replace(
           '#include <opaque_fragment>',
           `#include <opaque_fragment>
 {
-  float rim = pow(1.0 - abs(normalize(vNormal).z), uRimPower);
+  float facing = abs(normalize(vNormal).z);
+  float rim = pow(1.0 - facing, uRimPower);
+  float halo = max(pow(1.0 - facing, uRimPower * 0.35) - rim, 0.0);
   gl_FragColor.rgb += uRimColor * rim * uRimStrength;
+  gl_FragColor.rgb += uSssColor * halo * uSssStrength;
 }`,
         );
     };

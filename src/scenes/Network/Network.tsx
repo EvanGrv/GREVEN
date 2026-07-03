@@ -395,20 +395,88 @@ export function Network({ quality }: { quality: QualityLevel }) {
   const pulseStart = useRef<number | null>(null);
   const pulseTarget = useRef<THREE.Vector3 | null>(null);
 
+  // Fibre materials — one per layer, shared by the merged geometry. The
+  // cinematic translucency is a pure-shader trick (NO three.js transmission,
+  // which re-renders the scene into a buffer every frame): opacity follows a
+  // fresnel term, so the strand's core stays diaphanous while its grazing
+  // edges thicken and catch a warm rim — frosted living glass, for the cost
+  // of a few ALU ops per fragment.
+  const fiberMaterials = useMemo(() => {
+    const make = (color: string, emissive: string, intensity: number, opacity: number) => {
+      const m = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color(color),
+        emissive: new THREE.Color(emissive),
+        emissiveIntensity: intensity,
+        roughness: 0.5,
+        metalness: 0,
+        sheen: 0.5,
+        sheenRoughness: 0.55,
+        sheenColor: new THREE.Color('#b79a72'),
+        transparent: true,
+        opacity,
+        toneMapped: true,
+      });
+      m.onBeforeCompile = (shader) => {
+        shader.uniforms.uRimColor = { value: new THREE.Color('#b79a72') };
+        shader.fragmentShader = shader.fragmentShader
+          .replace('#include <common>', '#include <common>\nuniform vec3 uRimColor;')
+          .replace(
+            '#include <opaque_fragment>',
+            `#include <opaque_fragment>
+{
+  float fres = pow(1.0 - abs(normalize(vNormal).z), 2.2);
+  gl_FragColor.rgb += uRimColor * fres * 0.5;
+  gl_FragColor.a = clamp(gl_FragColor.a * (0.62 + 1.15 * fres), 0.0, 0.95);
+}`,
+          );
+      };
+      return m;
+    };
+    return {
+      link: make('#564735', '#54422c', 0.55, 0.72),
+      fine: make('#564735', '#443522', 0.45, 0.64),
+      back: make('#3f352a', '#443522', 0.4, 0.5),
+    } as const;
+  }, []);
+
+  useEffect(() => {
+    return () => Object.values(fiberMaterials).forEach((m) => m.dispose());
+  }, [fiberMaterials]);
+
   // Synapse material (spec: slightly emissive, soft falloff, organic
   // imperfection) shared by every terminal bouton.
-  const synapseMaterial = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color('#564735'),
-        emissive: new THREE.Color('#8a7050'),
-        emissiveIntensity: 0.35,
-        roughness: 0.6,
-        metalness: 0,
-        toneMapped: true,
-      }),
-    [],
-  );
+  const synapseMaterial = useMemo(() => {
+    const m = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#564735'),
+      emissive: new THREE.Color('#8a7050'),
+      emissiveIntensity: 0.4,
+      roughness: 0.45,
+      metalness: 0,
+      sheen: 0.4,
+      sheenRoughness: 0.6,
+      sheenColor: new THREE.Color('#b79a72'),
+      transparent: true,
+      opacity: 0.82,
+      toneMapped: true,
+    });
+    // Same fresnel translucency as the fibres: the boutons read as tiny
+    // luminous droplets at the end of each process.
+    m.onBeforeCompile = (shader) => {
+      shader.uniforms.uRimColor = { value: new THREE.Color('#b79a72') };
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform vec3 uRimColor;')
+        .replace(
+          '#include <opaque_fragment>',
+          `#include <opaque_fragment>
+{
+  float fres = pow(1.0 - abs(normalize(vNormal).z), 2.2);
+  gl_FragColor.rgb += uRimColor * fres * 0.45;
+  gl_FragColor.a = clamp(gl_FragColor.a * (0.7 + 0.9 * fres), 0.0, 0.95);
+}`,
+        );
+    };
+    return m;
+  }, []);
 
   // All terminal boutons in a single instanced draw call (they are static).
   const tipsMesh = useMemo(() => {
@@ -572,23 +640,14 @@ export function Network({ quality }: { quality: QualityLevel }) {
     <group>
       {/* Fibre graph — thick translucent processes, the same living matter as
           the membranes: light grazes their tops and seems to pass through
-          (reference: frosted, softly glowing strands — in GREVEN's palette). */}
+          (frosted, softly glowing strands — in GREVEN's palette). */}
       {tubes.map((tube) => (
-        <mesh key={`tube-${tube.key}`} geometry={tube.geometry} frustumCulled={false}>
-          <meshPhysicalMaterial
-            color={tube.layer === 'back' ? '#3f352a' : '#564735'}
-            emissive={tube.layer === 'link' ? '#54422c' : '#443522'}
-            emissiveIntensity={tube.layer === 'link' ? 0.55 : 0.45}
-            roughness={0.5}
-            metalness={0}
-            sheen={0.5}
-            sheenRoughness={0.55}
-            sheenColor="#b79a72"
-            transparent
-            opacity={tube.layer === 'back' ? 0.45 : tube.layer === 'fine' ? 0.6 : 0.66}
-            toneMapped
-          />
-        </mesh>
+        <mesh
+          key={`tube-${tube.key}`}
+          geometry={tube.geometry}
+          material={fiberMaterials[tube.layer]}
+          frustumCulled={false}
+        />
       ))}
 
       {/* Neurons — dendrite mesh + its glowing soma core. */}
