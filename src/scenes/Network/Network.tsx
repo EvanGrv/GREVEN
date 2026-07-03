@@ -70,6 +70,8 @@ interface Placement {
   rotation: THREE.Euler;
   /** World scale applied to the (unit-ish) geometry. */
   meshScale: number;
+  /** Gentle anisotropic stretch — real cell bodies are never perfect spheres. */
+  stretch: [number, number, number];
   coreRadius: number;
   coreIntensity: number;
   wobble: number;
@@ -102,15 +104,18 @@ function makeFiberCurve(
   return new THREE.CubicBezierCurve3(start, c1, c2, end);
 }
 
-/** Tapered tube: thick where the fibre leaves the cell, thin at the far end —
- *  the "variable thickness with natural curvature" of the spec board. Built as
- *  a unit-radius tube whose rings are then scaled along the curve. */
+/** Tapered tube: thick where the fibre leaves the cell, thin at the far end.
+ *  Built as a unit-radius tube whose rings are then scaled along the curve.
+ *  `flare` > 1 makes the taper non-linear: a wide conical base that narrows
+ *  fast — the axon hillock of the reference, where the soma visibly melts
+ *  into each process instead of a wire glued onto a ball. */
 function taperedTube(
   curve: THREE.CubicBezierCurve3,
   tubularSegments: number,
   r0: number,
   r1: number,
   radialSegments = 6,
+  flare = 1,
 ): THREE.BufferGeometry {
   const geo = new THREE.TubeGeometry(curve, tubularSegments, 1, radialSegments, false);
   const pos = geo.getAttribute('position') as THREE.BufferAttribute;
@@ -120,7 +125,7 @@ function taperedTube(
   for (let i = 0; i < pos.count; i += 1) {
     const t = Math.min(Math.floor(i / ringVerts) / tubularSegments, 1);
     curve.getPoint(t, center);
-    const r = r0 + (r1 - r0) * t;
+    const r = r1 + (r0 - r1) * Math.pow(1 - t, flare);
     v.fromBufferAttribute(pos, i).sub(center).multiplyScalar(r).add(center);
     pos.setXYZ(i, v.x, v.y, v.z);
   }
@@ -177,6 +182,11 @@ export function Network({ quality }: { quality: QualityLevel }) {
     const scaleFor = (v: Variant, targetR: number) => targetR / geoOf(v).radius;
     const randRot = () =>
       new THREE.Euler(rng.range(-0.5, 0.5), rng.range(-Math.PI, Math.PI), rng.range(-0.4, 0.4));
+    const randStretch = (): [number, number, number] => [
+      rng.range(0.92, 1.12),
+      rng.range(0.86, 1.06),
+      rng.range(0.92, 1.12),
+    ];
 
     // Central neuron — the round soma, the anchor of the composition.
     out.push({
@@ -185,6 +195,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
       variant: 'a',
       rotation: new THREE.Euler(-0.16, 0.22, 0.05),
       meshScale: scaleFor('a', CENTER_TARGET_R),
+      stretch: [1.08, 0.94, 1.04],
       coreRadius: 0.12,
       coreIntensity: 0.75,
       wobble: 0.02,
@@ -205,6 +216,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
         variant: v,
         rotation: randRot(),
         meshScale: scaleFor(v, NAV_TARGET_R * rng.range(0.85, 1.2)),
+        stretch: randStretch(),
         coreRadius: 0.07,
         coreIntensity: 0.85,
         wobble: 0.05,
@@ -223,6 +235,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
         variant: v,
         rotation: randRot(),
         meshScale: scaleFor(v, d.r * rng.range(0.9, 1.1)),
+        stretch: randStretch(),
         coreRadius: d.r * 0.18,
         coreIntensity: 0.35,
         wobble: 0.06,
@@ -278,11 +291,13 @@ export function Network({ quality }: { quality: QualityLevel }) {
       const curve = makeFiberCurve(originToward(p.position), p.position, rng);
       list.push({
         key: p.key,
-        geometry: taperedTube(curve, 26, 0.034, 0.011, 8),
+        // Wide conical base melting out of the central soma, then a thick
+        // translucent process — the reference's star-cell morphology.
+        geometry: taperedTube(curve, 30, 0.11, 0.016, 8, 2.6),
         layer: 'link',
       });
       axons.push(curve);
-      if (rng.float() < 0.85) pushBranch(`br-${p.key}`, curve, 0.01, 'fine');
+      if (rng.float() < 0.85) pushBranch(`br-${p.key}`, curve, 0.013, 'fine');
     });
 
     // Dendrite crowns: every cell body sprouts a few short processes of its
@@ -291,7 +306,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
     placements.forEach((p, i) => {
       if (p.key === 'center' || !p.showMesh) return; // centre has its full set
       const somaR = p.meshScale * geoOf(p.variant).radius;
-      const n = rng.int(2, 3);
+      const n = rng.int(3, 4);
       // Processes continue the radial flow: they mostly point AWAY from the
       // centre (the fibre "passes through" the cell and keeps going outward).
       const outward = p.position.clone().normalize();
@@ -304,15 +319,17 @@ export function Network({ quality }: { quality: QualityLevel }) {
           );
         if (dir.lengthSq() < 1e-4) dir.set(1, 0, 0);
         dir.normalize();
-        const start = p.position.clone().addScaledVector(dir, somaR * 0.5);
-        const end = p.position.clone().addScaledVector(dir, somaR + rng.range(0.45, 1.0));
+        // Root buried in the membrane with a wide flared base, so the small
+        // cells read as star-shaped too, not as beads with hairs.
+        const start = p.position.clone().addScaledVector(dir, somaR * 0.3);
+        const end = p.position.clone().addScaledVector(dir, somaR + rng.range(0.5, 1.1));
         const curve = makeFiberCurve(start, end, rng);
         list.push({
           key: `crown-${i}-${k}`,
-          geometry: taperedTube(curve, 14, 0.013, 0.003, 5),
+          geometry: taperedTube(curve, 16, somaR * 0.34, 0.006, 6, 2.6),
           layer: 'fine',
         });
-        ends.push({ p: end, r: rng.range(0.015, 0.03) });
+        ends.push({ p: end, r: rng.range(0.022, 0.04) });
       }
     });
 
@@ -329,11 +346,11 @@ export function Network({ quality }: { quality: QualityLevel }) {
       const curve = makeFiberCurve(originToward(end), end, rng);
       list.push({
         key: `dend-${i}`,
-        geometry: taperedTube(curve, 26, 0.024, 0.005, 6),
+        geometry: taperedTube(curve, 26, 0.08, 0.007, 6, 2.6),
         layer: 'fine',
       });
-      ends.push({ p: end, r: rng.range(0.02, 0.04) });
-      if (rng.float() < 0.8) pushBranch(`dend-br-${i}`, curve, 0.008, 'fine');
+      ends.push({ p: end, r: rng.range(0.025, 0.045) });
+      if (rng.float() < 0.8) pushBranch(`dend-br-${i}`, curve, 0.01, 'fine');
     }
 
     // Merge the individual fibres into ONE geometry per layer: 3 draw
@@ -549,17 +566,22 @@ export function Network({ quality }: { quality: QualityLevel }) {
 
   return (
     <group>
-      {/* Fibre graph — dark organic filaments, lit edges only, never neon. */}
+      {/* Fibre graph — thick translucent processes, the same living matter as
+          the membranes: light grazes their tops and seems to pass through
+          (reference: frosted, softly glowing strands — in GREVEN's palette). */}
       {tubes.map((tube) => (
         <mesh key={`tube-${tube.key}`} geometry={tube.geometry} frustumCulled={false}>
-          <meshStandardMaterial
+          <meshPhysicalMaterial
             color={tube.layer === 'back' ? '#3f352a' : '#564735'}
-            emissive={tube.layer === 'link' ? '#4a3a26' : '#382c1c'}
-            emissiveIntensity={tube.layer === 'link' ? 0.5 : 0.4}
-            roughness={0.75}
+            emissive={tube.layer === 'link' ? '#54422c' : '#443522'}
+            emissiveIntensity={tube.layer === 'link' ? 0.55 : 0.45}
+            roughness={0.5}
             metalness={0}
+            sheen={0.5}
+            sheenRoughness={0.55}
+            sheenColor="#b79a72"
             transparent
-            opacity={tube.layer === 'back' ? 0.5 : tube.layer === 'fine' ? 0.78 : 0.95}
+            opacity={tube.layer === 'back' ? 0.45 : tube.layer === 'fine' ? 0.6 : 0.66}
             toneMapped
           />
         </mesh>
@@ -579,7 +601,11 @@ export function Network({ quality }: { quality: QualityLevel }) {
               geometry={geoOf(p.variant).geometry}
               material={material}
               rotation={p.rotation}
-              scale={p.meshScale}
+              scale={[
+                p.meshScale * p.stretch[0],
+                p.meshScale * p.stretch[1],
+                p.meshScale * p.stretch[2],
+              ]}
               frustumCulled={false}
             />
           )}
