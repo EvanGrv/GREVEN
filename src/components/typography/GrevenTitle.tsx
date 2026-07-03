@@ -1,3 +1,6 @@
+'use client';
+
+import { useSceneStore } from '@/stores/sceneStore';
 import styles from './GrevenTitle.module.css';
 
 export interface GrevenTitleProps {
@@ -19,8 +22,15 @@ export interface GrevenTitleProps {
  */
 export function GrevenTitle({ children, as = 'h1', className }: GrevenTitleProps) {
   const Tag = as;
+  const hoveredSection = useSceneStore((s) => s.hoveredSection);
+  const hasNetworkHover = Boolean(hoveredSection);
+
   return (
-    <Tag className={`${styles.title} ${className ?? ''}`} aria-label="GREVEN">
+    <Tag
+      className={`${styles.title} ${className ?? ''}`}
+      aria-label="GREVEN"
+      data-network-hover={hasNetworkHover || undefined}
+    >
       <span className={styles.part} aria-hidden="true">
         GRE
       </span>

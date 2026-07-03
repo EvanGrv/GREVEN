@@ -1,20 +1,41 @@
 .title {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(3rem, 10vw, 13rem) minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  gap: clamp(2.5rem, 11vw, 11rem);
+  width: 100%;
   font-family: var(--font-serif);
   font-weight: 500;
-  font-size: var(--fs-display);
+  font-size: clamp(5.75rem, 18.8vw, 30rem);
   letter-spacing: var(--tracking-title);
   line-height: 1;
   color: var(--text-primary);
   margin: 0;
   user-select: none;
+  opacity: 1;
+  filter: blur(0);
+  transition:
+    opacity var(--dur-medium) var(--ease-editorial),
+    filter var(--dur-medium) var(--ease-editorial);
+  will-change: opacity, filter;
+}
+
+.title[data-network-hover='true'] {
+  opacity: 0.58;
+  filter: blur(0.25px) brightness(0.82);
 }
 
 .part {
   display: inline-block;
+  transform: scaleX(0.76);
+  transform-origin: center;
+}
+
+.part:first-child {
+  justify-self: start;
+}
+
+.part:last-child {
+  justify-self: end;
 }
 
 .slot {
@@ -24,13 +45,24 @@
   justify-content: center;
   /* Reserve space so GRE and VEN keep their positions even before the
      network mounts; the WebGL layer overflows this box for depth. */
-  width: clamp(0.5rem, 2vw, 2rem);
+  width: 100%;
   align-self: stretch;
 }
 
 @media (max-width: 720px) {
   .title {
-    flex-direction: column;
-    gap: clamp(6rem, 34vw, 12rem);
+    grid-template-columns: 1fr;
+    grid-template-rows: auto clamp(6rem, 34vw, 12rem) auto;
+    font-size: clamp(5.25rem, 32vw, 8.5rem);
+  }
+
+  .part:first-child,
+  .part:last-child {
+    justify-self: center;
+  }
+
+  .slot {
+    width: clamp(2rem, 10vw, 4rem);
+    justify-self: center;
   }
 }

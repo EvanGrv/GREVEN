@@ -6,3 +6,8 @@
      Canvas-level hover/click interactions are enabled selectively in Step 7. */
   pointer-events: none;
 }
+
+.backdrop,
+.backdrop * {
+  pointer-events: none !important;
+}
