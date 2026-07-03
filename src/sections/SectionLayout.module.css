@@ -22,7 +22,6 @@
   );
 }
 
-.top,
 .grid,
 .footer {
   position: relative;
@@ -30,6 +29,10 @@
 }
 
 .top {
+  /* Above the sibling contexts: hosts the mobile menu overlay, whose
+     z-index resolves inside this stacking context (see page.module.css). */
+  position: relative;
+  z-index: var(--z-nav);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;

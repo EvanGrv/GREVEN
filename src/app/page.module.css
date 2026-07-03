@@ -31,7 +31,6 @@
   background: linear-gradient(to top, rgba(24, 24, 18, 0.6), transparent);
 }
 
-.topRow,
 .center,
 .footerRow {
   position: relative;
@@ -39,6 +38,11 @@
 }
 
 .topRow {
+  /* Above the footer: this header hosts the mobile menu overlay, whose
+     z-index resolves INSIDE this stacking context — as a sibling context
+     equal to the footer's, DOM order let the footer swallow menu taps. */
+  position: relative;
+  z-index: var(--z-nav);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
