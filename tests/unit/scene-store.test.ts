@@ -8,6 +8,7 @@ describe('sceneStore', () => {
       activeSection: null,
       hoveredSection: null,
       travelRequest: null,
+      returnRequest: null,
     });
   });
 
@@ -28,6 +29,26 @@ describe('sceneStore', () => {
     expect(first?.nonce).toBeDefined();
     expect(second?.nonce).toBe((first?.nonce ?? 0) + 1);
     expect(second?.target).toEqual([1, 2, 3]);
+  });
+
+  it('increments the return nonce on every request so repeats re-trigger', () => {
+    const { requestReturn } = useSceneStore.getState();
+    requestReturn('recherche');
+    const first = useSceneStore.getState().returnRequest;
+    requestReturn('recherche');
+    const second = useSceneStore.getState().returnRequest;
+    expect(first?.section).toBe('recherche');
+    expect(second?.nonce).toBe((first?.nonce ?? 0) + 1);
+  });
+
+  it('mutates the card anchor in place (no new object per frame)', () => {
+    const before = useSceneStore.getState().cardAnchor;
+    before.x = 320;
+    before.y = 180;
+    before.visible = true;
+    const after = useSceneStore.getState().cardAnchor;
+    expect(after).toBe(before);
+    expect(after.visible).toBe(true);
   });
 
   it('mutates the pointer holder in place (no new object per move)', () => {

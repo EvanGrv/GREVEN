@@ -23,7 +23,7 @@ import { useNeuronAsset, type NeuronMeshAsset } from '@/scenes/Neuron/useNeuronA
  * Every neuron keeps a fixed world position, so the five clickable secondary
  * neurons hit-test exactly (cheap ray-sphere on their cores; the geometry is
  * never raycast) and stay in sync with the CameraRig focus / NeuralTravel /
- * ScrollExploration, which all read NETWORK_CONFIG.navPositions. Life comes from
+ * NeuronCard, which all read NETWORK_CONFIG.navPositions. Life comes from
  * core breathing, gentle per-neuron wobble and the camera parallax — never from
  * moving the neurons, so hover stays accurate. The canvas is pointer-events:none;
  * hover/selection is mirrored through the scene store to unify the 3D neurons
@@ -161,8 +161,6 @@ function buildBranch(
 export function Network({ quality }: { quality: QualityLevel }) {
   const reducedMotion = useSceneStore((s) => s.reducedMotion);
   const setHoveredSection = useSceneStore((s) => s.setHoveredSection);
-  const setActiveSection = useSceneStore((s) => s.setActiveSection);
-  const requestTravel = useSceneStore((s) => s.requestTravel);
   const hoveredSection = useSceneStore((s) => s.hoveredSection);
 
   const camera = useThree((s) => s.camera);
@@ -516,26 +514,6 @@ export function Network({ quality }: { quality: QualityLevel }) {
     };
   }, [hoveredSection]);
 
-  const selectNeuron = useCallback(
-    (id: SectionId) => {
-      const p = navBySectionId.get(id);
-      if (!p) return;
-      setActiveSection(id);
-      requestTravel(id, [p.x, p.y, p.z]);
-    },
-    [navBySectionId, setActiveSection, requestTravel],
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const onClick = () => {
-      const id = lastHovered.current;
-      if (id) selectNeuron(id);
-    };
-    window.addEventListener('click', onClick);
-    return () => window.removeEventListener('click', onClick);
-  }, [selectNeuron]);
-
   const activeSection = useSceneStore((s) => s.activeSection);
   useEffect(() => {
     pulseStart.current = null;
@@ -544,27 +522,49 @@ export function Network({ quality }: { quality: QualityLevel }) {
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    const { pointer, hoveredSection: hov, activeSection: act } = useSceneStore.getState();
+    const {
+      pointer,
+      hoveredSection: hov,
+      activeSection: act,
+      travelPose,
+    } = useSceneStore.getState();
 
-    // 1) Hover hit-test on the five nav cores (cheap ray-sphere).
-    scratch.ndc.set(pointer.x, pointer.y);
-    raycaster.setFromCamera(scratch.ndc, camera);
+    // 1) Hover hit-test on the five nav cores (cheap ray-sphere). Frozen while
+    //    a camera travel plays: neurons sweeping under the idle pointer must
+    //    not re-trigger hover (it reopened the preview card mid-dive).
     let hoveredId: SectionId | null = null;
-    let best = Infinity;
-    for (let i = 0; i < placements.length; i += 1) {
-      const p = placements[i]!;
-      if (!p.sectionId) continue;
-      if (raycaster.ray.distanceToPoint(p.position) < NAV_HIT_RADIUS) {
-        const d = camera.position.distanceToSquared(p.position);
-        if (d < best) {
-          best = d;
-          hoveredId = p.sectionId;
+    if (!travelPose.active) {
+      scratch.ndc.set(pointer.x, pointer.y);
+      raycaster.setFromCamera(scratch.ndc, camera);
+      let best = Infinity;
+      for (let i = 0; i < placements.length; i += 1) {
+        const p = placements[i]!;
+        if (!p.sectionId) continue;
+        if (raycaster.ray.distanceToPoint(p.position) < NAV_HIT_RADIUS) {
+          const d = camera.position.distanceToSquared(p.position);
+          if (d < best) {
+            best = d;
+            hoveredId = p.sectionId;
+          }
         }
       }
     }
     if (hoveredId !== lastHovered.current) {
       lastHovered.current = hoveredId;
       setHoveredSection(hoveredId);
+    }
+
+    // 1b) Project the focused nav core to viewport pixels for the DOM preview
+    //     card (works whether the focus came from the ray or the side nav).
+    const anchor = useSceneStore.getState().cardAnchor;
+    const focusPos = hov ? navBySectionId.get(hov) : undefined;
+    if (focusPos) {
+      scratch.cur.copy(focusPos).project(camera);
+      anchor.x = (scratch.cur.x * 0.5 + 0.5) * state.size.width;
+      anchor.y = (-scratch.cur.y * 0.5 + 0.5) * state.size.height;
+      anchor.visible = true;
+    } else {
+      anchor.visible = false;
     }
 
     // 2) Per-neuron sway + soma pulsation (spec: 1.00→1.05 over ~4–6s) +

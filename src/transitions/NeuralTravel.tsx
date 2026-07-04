@@ -5,9 +5,10 @@ import { useThree } from '@react-three/fiber';
 import { usePathname, useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import * as THREE from 'three';
-import { getSection } from '@/data/sections';
+import { getSection, NEURON_SECTIONS } from '@/data/sections';
+import { NETWORK_CONFIG } from '@/data/network.config';
 import { useSceneStore } from '@/stores/sceneStore';
-import { SECTION_POSE } from '@/scenes/CameraRig/poses';
+import { HOME_POSE, SECTION_POSE } from '@/scenes/CameraRig/poses';
 
 /**
  * Cinematic neural travel controller.
@@ -26,6 +27,7 @@ export function NeuralTravel() {
   const pathname = usePathname();
 
   const travelRequest = useSceneStore((s) => s.travelRequest);
+  const returnRequest = useSceneStore((s) => s.returnRequest);
   const reducedMotion = useSceneStore((s) => s.reducedMotion);
   const setActiveSection = useSceneStore((s) => s.setActiveSection);
 
@@ -43,6 +45,7 @@ export function NeuralTravel() {
       aStart: new THREE.Vector3(),
       lookTarget: new THREE.Vector3(),
       sectionPos: new THREE.Vector3(...SECTION_POSE.position),
+      homePos: new THREE.Vector3(...HOME_POSE.position),
       origin: new THREE.Vector3(0, 0, 0),
     }),
     [],
@@ -151,6 +154,93 @@ export function NeuralTravel() {
       tl.kill();
     };
   }, [travelRequest, reducedMotion, camera, router, scratch]);
+
+  // Reverse journey: from a section page back to the network overview.
+  // Mirrors the forward travel — the camera pulls in toward the section's
+  // neuron, then sweeps out along an arc to the home pose, the gaze gliding
+  // origin → neuron → origin so both ends stay perfectly continuous.
+  useEffect(() => {
+    if (!returnRequest) return;
+
+    if (reducedMotion) {
+      router.push('/');
+      return;
+    }
+
+    const index = NEURON_SECTIONS.findIndex((sec) => sec.id === returnRequest.section);
+    const navPos = NETWORK_CONFIG.navPositions[index];
+    if (!navPos) {
+      router.push('/');
+      return;
+    }
+
+    const s = scratch;
+    const pose = useSceneStore.getState().travelPose;
+
+    timeline.current?.kill();
+
+    s.start.copy(camera.position);
+    s.target.set(...navPos);
+    // Pull-in anchor just in front of the neuron, on the side we approach from.
+    s.dir.copy(s.start).sub(s.target).normalize();
+    s.diveEnd.copy(s.target).addScaledVector(s.dir, 0.9);
+    const distance = s.diveEnd.distanceTo(s.homePos);
+
+    // Arc the way out so the pull-back sweeps through the network.
+    s.side.copy(s.dir).cross(s.up);
+    if (s.side.lengthSq() < 1e-4) s.side.set(1, 0, 0);
+    s.side.normalize();
+    s.mid
+      .copy(s.diveEnd)
+      .lerp(s.homePos, 0.55)
+      .addScaledVector(s.side, distance * 0.12)
+      .addScaledVector(s.up, distance * 0.06);
+
+    const curve = new THREE.CatmullRomCurve3([
+      s.start.clone(),
+      s.diveEnd.clone(),
+      s.mid.clone(),
+      s.homePos.clone(),
+    ]);
+
+    const duration = THREE.MathUtils.clamp(distance * 0.22, 1.4, 2.1);
+    const progress = { p: 0 };
+
+    pose.active = true;
+
+    const tl = gsap.timeline({
+      onComplete: () => {
+        pose.active = false;
+      },
+    });
+
+    tl.to(progress, {
+      p: 1,
+      duration,
+      ease: 'power2.inOut',
+      onUpdate: () => {
+        curve.getPoint(progress.p, s.cur);
+        pose.px = s.cur.x;
+        pose.py = s.cur.y;
+        pose.pz = s.cur.z;
+        // Gaze: origin → neuron (early) → origin (well before arrival), so the
+        // hand-over to the CameraRig's resting look is seamless.
+        const w = Math.sin(Math.min(1, progress.p * 1.25) * Math.PI);
+        s.lookTarget.copy(s.origin).lerp(s.target, w * 0.85);
+        pose.tx = s.lookTarget.x;
+        pose.ty = s.lookTarget.y;
+        pose.tz = s.lookTarget.z;
+      },
+    });
+
+    // Swap the route early so the landing chrome fades in during the sweep.
+    tl.call(() => router.push('/'), [], duration * 0.22);
+
+    timeline.current = tl;
+    return () => {
+      tl.kill();
+    };
+  }, [returnRequest, reducedMotion, camera, router, scratch]);
 
   return null;
 }

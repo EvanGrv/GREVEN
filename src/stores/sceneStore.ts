@@ -34,6 +34,22 @@ export interface TravelRequest {
   nonce: number;
 }
 
+/** A request to fly back from a section page to the network overview. */
+export interface ReturnRequest {
+  /** Section page the camera is leaving (its neuron shapes the pull-back). */
+  section: SectionId;
+  nonce: number;
+}
+
+/** Screen anchor of the hovered nav neuron, for the DOM preview card.
+ *  Mutated in place every frame by the Network (like `pointer`). */
+export interface CardAnchor {
+  /** Viewport pixels. */
+  x: number;
+  y: number;
+  visible: boolean;
+}
+
 export interface SceneState {
   /** Adaptive quality tier; null until device detection runs. */
   quality: QualityLevel | null;
@@ -51,6 +67,10 @@ export interface SceneState {
   travelPose: TravelPose;
   /** Latest travel request (null when none pending/handled). */
   travelRequest: TravelRequest | null;
+  /** Latest return-to-network request (null when none pending/handled). */
+  returnRequest: ReturnRequest | null;
+  /** In-place screen anchor for the neuron preview card (see note above). */
+  cardAnchor: CardAnchor;
 
   setQuality: (quality: QualityLevel) => void;
   setReducedMotion: (reduced: boolean) => void;
@@ -58,6 +78,7 @@ export interface SceneState {
   setActiveSection: (id: SectionId | null) => void;
   setHoveredSection: (id: SectionId | null) => void;
   requestTravel: (section: SectionId, target: [number, number, number]) => void;
+  requestReturn: (section: SectionId) => void;
 }
 
 export const useSceneStore = create<SceneState>((set) => ({
@@ -69,6 +90,8 @@ export const useSceneStore = create<SceneState>((set) => ({
   pointer: { x: 0, y: 0 },
   travelPose: { active: false, px: 0, py: 0, pz: 9, tx: 0, ty: 0, tz: 0 },
   travelRequest: null,
+  returnRequest: null,
+  cardAnchor: { x: 0, y: 0, visible: false },
 
   setQuality: (quality) => set({ quality }),
   setReducedMotion: (reducedMotion) => set({ reducedMotion }),
@@ -77,4 +100,6 @@ export const useSceneStore = create<SceneState>((set) => ({
   setHoveredSection: (hoveredSection) => set({ hoveredSection }),
   requestTravel: (section, target) =>
     set((s) => ({ travelRequest: { section, target, nonce: (s.travelRequest?.nonce ?? 0) + 1 } })),
+  requestReturn: (section) =>
+    set((s) => ({ returnRequest: { section, nonce: (s.returnRequest?.nonce ?? 0) + 1 } })),
 }));

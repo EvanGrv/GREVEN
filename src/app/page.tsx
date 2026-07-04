@@ -1,16 +1,15 @@
 import { Logo } from '@/components/ui/Logo/Logo';
 import { Navigation } from '@/components/navigation/Navigation';
+import { NeuronCard } from '@/components/ui/NeuronCard/NeuronCard';
 import { GrevenTitle, Eyebrow } from '@/components/typography';
-import { ScrollExploration } from '@/sections/ScrollExploration';
 import styles from './page.module.css';
 
 /**
- * Immersive landing composition.
+ * Immersive landing composition — a single-viewport network map.
  * The persistent WebGL network fills the viewport behind the content; GRE·VEN
  * sits over its dense core as the centrepiece, kept crisp (real HTML) and
- * readable via a soft scrim. Editorial chrome — signature, vertical nav,
- * "explorer mon univers" and a scroll hint — frames generous empty space,
- * following the reference's calm asymmetry.
+ * readable via a soft scrim. Hovering a navigation neuron raises its preview
+ * card (NeuronCard), whose arrow launches the cinematic travel into the page.
  */
 export default function HomePage() {
   return (
@@ -32,15 +31,10 @@ export default function HomePage() {
             <br />
             mon univers
           </Eyebrow>
-
-          <span className={styles.scrollHint} aria-hidden="true">
-            <span className={styles.scrollWord}>scroll</span>
-            <span className={styles.scrollLine} />
-          </span>
         </footer>
       </main>
 
-      <ScrollExploration />
+      <NeuronCard />
     </>
   );
 }
