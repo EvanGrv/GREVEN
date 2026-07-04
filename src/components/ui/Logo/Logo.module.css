@@ -19,13 +19,13 @@
 
 .wordmark {
   font-family: var(--font-serif);
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   letter-spacing: 0.28em;
   color: var(--text-primary);
 }
 
 .tagline {
-  font-size: 0.5625rem;
+  font-size: 0.5rem;
   letter-spacing: 0.26em;
   text-transform: uppercase;
   color: var(--text-secondary);

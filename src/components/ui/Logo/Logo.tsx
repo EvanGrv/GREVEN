@@ -17,7 +17,7 @@ export interface LogoProps {
 export function Logo({ variant = 'full', href = '/', className }: LogoProps) {
   const content = (
     <span className={`${styles.logo} ${className ?? ''}`}>
-      <EgMark size={variant === 'compact' ? 32 : 44} />
+      <EgMark size={variant === 'compact' ? 32 : 38} />
       {variant === 'full' ? (
         <span className={styles.text}>
           <span className={styles.wordmark}>GREVEN</span>
