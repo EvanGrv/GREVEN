@@ -68,7 +68,7 @@
   font-family: var(--font-sans);
   font-size: var(--fs-body);
   color: var(--text-primary);
-  background: rgba(40, 42, 32, 0.4);
+  background: rgba(39, 28, 17, 0.4);
   border: 1px solid var(--border-subtle);
   border-radius: 3px;
   padding: var(--space-3);

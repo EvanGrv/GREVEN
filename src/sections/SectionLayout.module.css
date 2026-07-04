@@ -16,8 +16,8 @@
   pointer-events: none;
   background: linear-gradient(
     to right,
-    rgba(20, 21, 15, 0.72),
-    rgba(20, 21, 15, 0.4) 45%,
+    rgba(20, 14, 8, 0.72),
+    rgba(20, 14, 8, 0.4) 45%,
     transparent 75%
   );
 }
@@ -152,6 +152,6 @@
   }
 
   .page::before {
-    background: linear-gradient(to bottom, rgba(20, 21, 15, 0.6), rgba(20, 21, 15, 0.75));
+    background: linear-gradient(to bottom, rgba(20, 14, 8, 0.6), rgba(20, 14, 8, 0.75));
   }
 }

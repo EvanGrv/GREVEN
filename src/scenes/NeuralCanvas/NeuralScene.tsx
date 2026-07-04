@@ -14,9 +14,9 @@ import { useSceneStore, type QualityLevel } from '@/stores/sceneStore';
 
 /** Deep, warm background baked into the scene. Rendering opaque keeps the bloom
  *  compositor correct and matches the reference's flat, mineral darkness. */
-const SCENE_BG = '#1c1e19';
-/** Slightly lifted olive haze — reads as depth mist, not black falloff. */
-const SCENE_FOG = '#282a21';
+const SCENE_BG = '#1b130c';
+/** Slightly lifted sand haze — reads as depth mist, not black falloff. */
+const SCENE_FOG = '#271c11';
 
 /**
  * The WebGL scene contents. Kept in its own module so it can be dynamically
@@ -64,21 +64,21 @@ export default function NeuralScene({ quality }: { quality: QualityLevel }) {
         <Environment resolution={64} frames={1}>
           <Lightformer
             form="rect"
-            color="#b79a72"
+            color="#b29e83"
             intensity={2.2}
             position={[-4, 4, 5]}
             scale={[5, 3, 1]}
           />
           <Lightformer
             form="rect"
-            color="#65371f"
+            color="#553927"
             intensity={1.4}
             position={[5, -3, -4]}
             scale={[4, 3, 1]}
           />
           <Lightformer
             form="ring"
-            color="#343328"
+            color="#33261a"
             intensity={0.8}
             position={[0, -5, 0]}
             rotation={[Math.PI / 2, 0, 0]}

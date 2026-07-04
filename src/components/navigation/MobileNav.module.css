@@ -20,7 +20,7 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
-  background: rgba(24, 25, 18, 0.94);
+  background: rgba(23, 16, 9, 0.94);
   backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;

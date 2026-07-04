@@ -5,32 +5,35 @@
  */
 
 :root {
-  /* --- Palette: primaries --- */
-  --color-eerie-black: #171913;
-  --color-deep-olive: #1c1e19;
-  --color-moss-grey: #343328;
-  --color-warm-stone: #736b5c;
-  --color-pearl: #b59d7c;
+  /* --- Palette: primaries ---
+     Derived from the "Coastal Cove" reference: Salted Sand #D9D3C5,
+     Cove Drift #BCAE98, Sandy Drift #A38C70, Seaside Oak #705B46,
+     Tides Edge #553927. Darks are Tides Edge deepened, never a cold black. */
+  --color-eerie-black: #171009;
+  --color-deep-olive: #1b130c;
+  --color-moss-grey: #33261a;
+  --color-warm-stone: #705b46;
+  --color-pearl: #e6e0d2;
 
   /* --- Palette: secondaries (use sparingly) --- */
-  --color-seal-brown: #65371f;
-  --color-rich-crimson: #321d1c;
-  --color-velvet-plum: #785c59;
-  --color-cafe-ole: #9a817a;
-  --color-allspice: #cbaaa2;
-  --color-tucson-tan: #e5be9e;
+  --color-seal-brown: #553927;
+  --color-rich-crimson: #33231a;
+  --color-velvet-plum: #7d6750;
+  --color-cafe-ole: #a38c70;
+  --color-allspice: #bcae98;
+  --color-tucson-tan: #cbb699;
 
   /* --- Semantic roles --- */
   --bg-base: var(--color-deep-olive);
   --bg-deep: var(--color-eerie-black);
-  --bg-elevated: #252720;
+  --bg-elevated: #241a11;
   --surface: var(--color-moss-grey);
-  --border-subtle: rgba(115, 107, 92, 0.22);
-  --border-strong: rgba(115, 107, 92, 0.4);
+  --border-subtle: rgba(112, 91, 70, 0.26);
+  --border-strong: rgba(112, 91, 70, 0.45);
 
-  --text-primary: var(--color-pearl);
-  --text-secondary: rgba(141, 123, 104, 0.85);
-  --text-muted: rgba(141, 123, 104, 0.6);
+  --text-primary: #d9d3c5;
+  --text-secondary: rgba(188, 174, 152, 0.88);
+  --text-muted: rgba(163, 140, 112, 0.65);
   --text-on-pearl: var(--color-eerie-black);
 
   --accent-warm: var(--color-seal-brown);

@@ -409,13 +409,13 @@ export function Network({ quality }: { quality: QualityLevel }) {
         metalness: 0,
         sheen: 0.5,
         sheenRoughness: 0.55,
-        sheenColor: new THREE.Color('#b79a72'),
+        sheenColor: new THREE.Color('#b29e83'),
         transparent: true,
         opacity,
         toneMapped: true,
       });
       m.onBeforeCompile = (shader) => {
-        shader.uniforms.uRimColor = { value: new THREE.Color('#b79a72') };
+        shader.uniforms.uRimColor = { value: new THREE.Color('#b29e83') };
         shader.fragmentShader = shader.fragmentShader
           .replace('#include <common>', '#include <common>\nuniform vec3 uRimColor;')
           .replace(
@@ -431,9 +431,9 @@ export function Network({ quality }: { quality: QualityLevel }) {
       return m;
     };
     return {
-      link: make('#564735', '#54422c', 0.55, 0.72),
-      fine: make('#564735', '#443522', 0.45, 0.64),
-      back: make('#3f352a', '#443522', 0.4, 0.5),
+      link: make('#5a4530', '#523b26', 0.55, 0.72),
+      fine: make('#5a4530', '#46331f', 0.45, 0.64),
+      back: make('#3e2e1e', '#46331f', 0.4, 0.5),
     } as const;
   }, []);
 
@@ -445,14 +445,14 @@ export function Network({ quality }: { quality: QualityLevel }) {
   // imperfection) shared by every terminal bouton.
   const synapseMaterial = useMemo(() => {
     const m = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#564735'),
-      emissive: new THREE.Color('#8a7050'),
+      color: new THREE.Color('#5a4530'),
+      emissive: new THREE.Color('#826a51'),
       emissiveIntensity: 0.4,
       roughness: 0.45,
       metalness: 0,
       sheen: 0.4,
       sheenRoughness: 0.6,
-      sheenColor: new THREE.Color('#b79a72'),
+      sheenColor: new THREE.Color('#b29e83'),
       transparent: true,
       opacity: 0.82,
       toneMapped: true,
@@ -460,7 +460,7 @@ export function Network({ quality }: { quality: QualityLevel }) {
     // Same fresnel translucency as the fibres: the boutons read as tiny
     // luminous droplets at the end of each process.
     m.onBeforeCompile = (shader) => {
-      shader.uniforms.uRimColor = { value: new THREE.Color('#b79a72') };
+      shader.uniforms.uRimColor = { value: new THREE.Color('#b29e83') };
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', '#include <common>\nuniform vec3 uRimColor;')
         .replace(
@@ -765,7 +765,7 @@ function Dust() {
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
       <pointsMaterial
-        color="#8a7050"
+        color="#826a51"
         size={0.03}
         sizeAttenuation
         transparent

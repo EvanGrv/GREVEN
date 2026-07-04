@@ -23,12 +23,12 @@
 
 .hero::before {
   top: 0;
-  background: linear-gradient(to bottom, rgba(24, 24, 18, 0.6), transparent);
+  background: linear-gradient(to bottom, rgba(23, 16, 9, 0.6), transparent);
 }
 
 .hero::after {
   bottom: 0;
-  background: linear-gradient(to top, rgba(24, 24, 18, 0.6), transparent);
+  background: linear-gradient(to top, rgba(23, 16, 9, 0.6), transparent);
 }
 
 .center,
@@ -75,8 +75,8 @@
   pointer-events: none;
   background: radial-gradient(
     ellipse at center,
-    rgba(28, 28, 21, 0.42),
-    rgba(28, 28, 21, 0.2) 48%,
+    rgba(27, 19, 12, 0.42),
+    rgba(27, 19, 12, 0.2) 48%,
     transparent 72%
   );
   filter: blur(28px);

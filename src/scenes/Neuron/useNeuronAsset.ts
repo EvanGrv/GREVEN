@@ -68,8 +68,8 @@ export function useNeuronAsset(): NeuronAssets {
       // Physical extras give the cinematic read: a soft wet clearcoat that
       // catches the environment, and a velvety sheen on grazing light — a
       // living membrane, never plastic or metal.
-      color: new THREE.Color('#524434'),
-      emissive: new THREE.Color('#2b2115'),
+      color: new THREE.Color('#57432e'),
+      emissive: new THREE.Color('#2c2013'),
       emissiveIntensity: 0.42,
       roughness: 0.58,
       metalness: 0,
@@ -77,7 +77,7 @@ export function useNeuronAsset(): NeuronAssets {
       clearcoatRoughness: 0.6,
       sheen: 0.32,
       sheenRoughness: 0.65,
-      sheenColor: new THREE.Color('#b79a72'),
+      sheenColor: new THREE.Color('#b29e83'),
       ior: 1.38,
       specularIntensity: 0.32,
       envMapIntensity: 0.55,
@@ -96,7 +96,7 @@ export function useNeuronAsset(): NeuronAssets {
     if (quality === 'high') {
       material.transmission = 0.55;
       material.thickness = 0.55;
-      material.attenuationColor = new THREE.Color('#8a7050');
+      material.attenuationColor = new THREE.Color('#826a51');
       material.attenuationDistance = 1.6;
       material.transparent = false;
       material.opacity = 1;
@@ -107,10 +107,10 @@ export function useNeuronAsset(): NeuronAssets {
     // and a wider, softer halo band beneath it fakes light scattering through
     // the cell wall — the subsurface depth of a real cinematic render.
     material.onBeforeCompile = (shader) => {
-      shader.uniforms.uRimColor = { value: new THREE.Color('#b79a72') };
+      shader.uniforms.uRimColor = { value: new THREE.Color('#b29e83') };
       shader.uniforms.uRimPower = { value: 3.2 };
       shader.uniforms.uRimStrength = { value: 0.55 };
-      shader.uniforms.uSssColor = { value: new THREE.Color('#8a7050') };
+      shader.uniforms.uSssColor = { value: new THREE.Color('#826a51') };
       shader.uniforms.uSssStrength = { value: 0.35 };
       shader.fragmentShader = shader.fragmentShader
         .replace(
