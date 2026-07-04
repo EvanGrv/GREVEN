@@ -33,7 +33,10 @@ import { useNeuronAsset, type NeuronMeshAsset } from '@/scenes/Neuron/useNeuronA
 /** Target world radius of each neuron kind (geometry is scaled to match). */
 const CENTER_TARGET_R = 0.62;
 const NAV_TARGET_R = 0.3;
-const NAV_HIT_RADIUS = 0.85;
+/** Generous but proportionate: since hover now raises the preview card, an
+ *  oversized zone made windows spawn/swap while the pointer merely crossed
+ *  the scene (0.85 covered ~1/4 of the viewport per neuron). */
+const NAV_HIT_RADIUS = 0.6;
 const PULSE_DURATION = 0.85;
 
 /** Non-interactive cell bodies, traced from the reference board. The small

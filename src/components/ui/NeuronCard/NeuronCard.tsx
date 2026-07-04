@@ -8,9 +8,14 @@ import { useSceneStore } from '@/stores/sceneStore';
 import { Eyebrow } from '@/components/typography';
 import styles from './NeuronCard.module.css';
 
-/** Delay before the card hides once the neuron is no longer hovered — long
- *  enough to travel the pointer from the neuron onto the card. */
-const CLOSE_GRACE_MS = 450;
+/** Once the pointer has left both the card and its neuron, the card closes
+ *  after this delay — and never before, so the window feels stable. */
+const LEAVE_CLOSE_MS = 1000;
+/** How often the supervisor re-evaluates pointer/focus state. */
+const SUPERVISE_MS = 120;
+/** A different neuron must hold the hover this long before it may steal an
+ *  open card (crossing its wide hover zone must not swap the window). */
+const RETARGET_INTENT_MS = 250;
 /** Gap between the neuron core and the card edge (px). */
 const GAP = 26;
 const MARGIN = 16;
@@ -32,7 +37,6 @@ export function NeuronCard() {
   const [section, setSection] = useState<Section | null>(null);
   const [open, setOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointerXY = useRef({ x: -1, y: -1 });
 
   // Track the raw pointer so closing can be decided geometrically. Enter/leave
@@ -57,31 +61,78 @@ export function NeuronCard() {
     return x >= r.left - PAD && x <= r.right + PAD && y >= r.top - PAD && y <= r.bottom + PAD;
   };
 
-  // Show on hover; hide after a grace period — but never while the pointer is
-  // physically resting on the card. That is what makes the window stable.
+  // Open the card when a neuron gains focus. Retargeting an ALREADY-open card
+  // to a different neuron requires intent: the new focus must persist briefly
+  // (the wide hover zones would otherwise steal the window from a pointer
+  // merely crossing the scene), and it never happens while the pointer rests
+  // on the current card.
+  const retargetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (hoveredSection) {
-      if (closeTimer.current) clearTimeout(closeTimer.current);
-      closeTimer.current = null;
-      const next = NEURON_SECTIONS.find((s) => s.id === hoveredSection);
-      if (next) {
+    if (!hoveredSection) return;
+    const next = NEURON_SECTIONS.find((s) => s.id === hoveredSection);
+    if (!next) return;
+    if (retargetTimer.current) {
+      clearTimeout(retargetTimer.current);
+      retargetTimer.current = null;
+    }
+    if (!open || !section || next.id === section.id) {
+      setSection(next);
+      setOpen(true);
+      return;
+    }
+    retargetTimer.current = setTimeout(() => {
+      const still = useSceneStore.getState().hoveredSection;
+      if (still === next.id && !pointerRestsOnCard()) {
         setSection(next);
         setOpen(true);
       }
-      return;
-    }
-    const tryClose = () => {
+    }, RETARGET_INTENT_MS);
+    return () => {
+      if (retargetTimer.current) clearTimeout(retargetTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoveredSection]);
+
+  // Supervisor — the whole life of an open card, evaluated geometrically:
+  // · pointer resting on the card → it stays open and the section keeps the
+  //   focus (highlighted neuron, dimmed title), whatever events did or didn't
+  //   fire;
+  // · pointer back on the neuron (or its nav link) → stays open;
+  // · pointer away from both → closes after LEAVE_CLOSE_MS, the countdown
+  //   resetting the moment the pointer returns.
+  useEffect(() => {
+    if (!open || !section) return;
+    let leftAt: number | null = null;
+    let focusHeldByCard = false;
+    const id = window.setInterval(() => {
+      const store = useSceneStore.getState();
       if (pointerRestsOnCard()) {
-        closeTimer.current = setTimeout(tryClose, 180);
+        leftAt = null;
+        if (store.hoveredSection !== section.id) {
+          store.setHoveredSection(section.id);
+          focusHeldByCard = true;
+        }
         return;
       }
-      setOpen(false);
-    };
-    closeTimer.current = setTimeout(tryClose, CLOSE_GRACE_MS);
-    return () => {
-      if (closeTimer.current) clearTimeout(closeTimer.current);
-    };
-  }, [hoveredSection]);
+      if (focusHeldByCard) {
+        // Release our hold so the raycast/nav become the source of truth again.
+        store.setHoveredSection(null);
+        focusHeldByCard = false;
+        leftAt = performance.now();
+        return;
+      }
+      if (store.hoveredSection === section.id) {
+        leftAt = null;
+        return;
+      }
+      if (leftAt === null) {
+        leftAt = performance.now();
+        return;
+      }
+      if (performance.now() - leftAt >= LEAVE_CLOSE_MS) setOpen(false);
+    }, SUPERVISE_MS);
+    return () => window.clearInterval(id);
+  }, [open, section]);
 
   // Position the card ONCE from the neuron's screen anchor, then freeze it.
   // The camera has pointer parallax: a card that kept following its neuron
@@ -142,8 +193,6 @@ export function NeuronCard() {
       ref={cardRef}
       className={styles.card}
       data-open={open || undefined}
-      onMouseEnter={() => setHoveredSection(section.id)}
-      onMouseLeave={() => setHoveredSection(null)}
       role="dialog"
       aria-label={`Aperçu — ${section.label}`}
     >
