@@ -114,11 +114,10 @@ const contact: SectionContent = {
         href: 'https://github.com/EvanGrv',
       },
       {
-        // TODO: replace with the exact LinkedIn URL.
         label: 'LinkedIn',
         kind: 'linkedin',
-        value: 'linkedin.com/in/evan-greven',
-        href: 'https://www.linkedin.com/in/evan-greven',
+        value: 'linkedin.com/in/evan-gréven',
+        href: 'https://www.linkedin.com/in/evan-gr%C3%A9ven-b2800b22b/',
       },
     ],
   },
