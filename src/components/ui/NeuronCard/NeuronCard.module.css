@@ -50,8 +50,8 @@
 .enter {
   align-self: flex-end;
   margin-top: var(--space-2);
-  width: 38px;
-  height: 38px;
+  width: 46px;
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;

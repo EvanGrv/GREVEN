@@ -10,7 +10,7 @@ import styles from './NeuronCard.module.css';
 
 /** Delay before the card hides once the neuron is no longer hovered — long
  *  enough to travel the pointer from the neuron onto the card. */
-const CLOSE_GRACE_MS = 280;
+const CLOSE_GRACE_MS = 450;
 /** Gap between the neuron core and the card edge (px). */
 const GAP = 26;
 const MARGIN = 16;
@@ -33,8 +33,32 @@ export function NeuronCard() {
   const [open, setOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pointerXY = useRef({ x: -1, y: -1 });
 
-  // Show on hover; hide after a grace period so the pointer can reach the card.
+  // Track the raw pointer so closing can be decided geometrically. Enter/leave
+  // events are not enough: when the neuron hover drops while the pointer is
+  // ALREADY inside the card, no new mouseenter ever fires and the card used to
+  // fade away under the cursor.
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      pointerXY.current.x = e.clientX;
+      pointerXY.current.y = e.clientY;
+    };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    return () => window.removeEventListener('pointermove', onMove);
+  }, []);
+
+  const pointerRestsOnCard = () => {
+    const el = cardRef.current;
+    if (!el) return false;
+    const r = el.getBoundingClientRect();
+    const { x, y } = pointerXY.current;
+    const PAD = 24; // forgiving corridor around the card
+    return x >= r.left - PAD && x <= r.right + PAD && y >= r.top - PAD && y <= r.bottom + PAD;
+  };
+
+  // Show on hover; hide after a grace period — but never while the pointer is
+  // physically resting on the card. That is what makes the window stable.
   useEffect(() => {
     if (hoveredSection) {
       if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -46,36 +70,54 @@ export function NeuronCard() {
       }
       return;
     }
-    closeTimer.current = setTimeout(() => setOpen(false), CLOSE_GRACE_MS);
+    const tryClose = () => {
+      if (pointerRestsOnCard()) {
+        closeTimer.current = setTimeout(tryClose, 180);
+        return;
+      }
+      setOpen(false);
+    };
+    closeTimer.current = setTimeout(tryClose, CLOSE_GRACE_MS);
     return () => {
       if (closeTimer.current) clearTimeout(closeTimer.current);
     };
   }, [hoveredSection]);
 
-  // Follow the neuron's screen anchor (in-place store value, no re-renders).
+  // Position the card ONCE from the neuron's screen anchor, then freeze it.
+  // The camera has pointer parallax: a card that kept following its neuron
+  // slid away from the cursor on approach, making the arrow unclickable.
+  const frozenFor = useRef<string | null>(null);
   useEffect(() => {
-    if (!open) return;
+    if (!open || !section) return;
+    if (frozenFor.current === section.id) return;
     let raf = 0;
     const tick = () => {
       const el = cardRef.current;
-      if (el) {
-        const anchor = useSceneStore.getState().cardAnchor;
-        if (anchor.visible) {
-          const w = el.offsetWidth;
-          const h = el.offsetHeight;
-          const x = Math.min(
-            Math.max(anchor.x, MARGIN + w / 2),
-            window.innerWidth - MARGIN - w / 2,
-          );
-          let y = anchor.y + GAP;
-          if (y + h > window.innerHeight - MARGIN) y = anchor.y - GAP - h;
-          el.style.transform = `translate3d(${x - w / 2}px, ${y}px, 0)`;
-        }
+      const anchor = useSceneStore.getState().cardAnchor;
+      if (el && anchor.visible) {
+        const w = el.offsetWidth;
+        const h = el.offsetHeight;
+        const x = Math.min(Math.max(anchor.x, MARGIN + w / 2), window.innerWidth - MARGIN - w / 2);
+        let y = anchor.y + GAP;
+        if (y + h > window.innerHeight - MARGIN) y = anchor.y - GAP - h;
+        el.style.transform = `translate3d(${x - w / 2}px, ${y}px, 0)`;
+        frozenFor.current = section.id;
+        return;
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
+  }, [open, section]);
+
+  // Re-arm the one-shot positioning once the card has fully faded out, so the
+  // next opening anchors at the neuron's then-current position.
+  useEffect(() => {
+    if (open) return;
+    const t = setTimeout(() => {
+      frozenFor.current = null;
+    }, 420);
+    return () => clearTimeout(t);
   }, [open]);
 
   const index = section ? NEURON_SECTIONS.findIndex((s) => s.id === section.id) : -1;
