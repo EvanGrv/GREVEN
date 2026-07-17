@@ -1,0 +1,13 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-canvas);
+  /* The scene is a backdrop; HTML above stays fully interactive.
+     Canvas-level hover/click interactions are enabled selectively in Step 7. */
+  pointer-events: none;
+}
+
+.backdrop,
+.backdrop * {
+  pointer-events: none !important;
+}

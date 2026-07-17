@@ -1,0 +1,73 @@
+.root {
+  display: flex;
+}
+
+.toggle {
+  position: relative;
+  z-index: calc(var(--z-overlay) + 1);
+  font-size: var(--fs-small);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: var(--space-2) 0;
+}
+
+.toggle:hover {
+  color: var(--text-primary);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: rgba(23, 16, 9, 0.94);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  padding: var(--page-margin);
+  gap: var(--space-12);
+  animation: fade var(--dur-medium) var(--ease-editorial);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.overlayHeader {
+  color: var(--text-primary);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.link {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  font-family: var(--font-serif);
+  font-size: var(--fs-h2);
+  color: var(--text-secondary);
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.link[aria-current='page'],
+.link:hover {
+  color: var(--color-pearl);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    animation: none;
+  }
+}

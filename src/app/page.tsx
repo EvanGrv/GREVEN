@@ -1,51 +1,40 @@
-import Link from 'next/link';
-import { NEURON_SECTIONS } from '@/data/sections';
+import { Logo } from '@/components/ui/Logo/Logo';
+import { Navigation } from '@/components/navigation/Navigation';
+import { NeuronCard } from '@/components/ui/NeuronCard/NeuronCard';
+import { GrevenTitle, Eyebrow } from '@/components/typography';
 import styles from './page.module.css';
 
 /**
- * Landing placeholder for the neural experience.
- * The final composition (persistent WebGL network between GRE and VEN,
- * editorial side panels, cinematic transitions) is built in later steps.
- * This scaffold already establishes the dark palette, the GRE / VEN split,
- * and accessible HTML navigation that mirrors the future 3D neurons.
+ * Immersive landing composition — a single-viewport network map.
+ * The persistent WebGL network fills the viewport behind the content; GRE·VEN
+ * sits over its dense core as the centrepiece, kept crisp (real HTML) and
+ * readable via a soft scrim. Hovering a navigation neuron raises its preview
+ * card (NeuronCard), whose arrow launches the cinematic travel into the page.
  */
 export default function HomePage() {
   return (
-    <main id="content" className={styles.hero}>
-      <div className={styles.topRow}>
-        <div className={styles.brand}>
-          <span className={styles.wordmark}>GREVEN</span>
-          <span className={styles.tagline}>AI Research Portfolio</span>
+    <>
+      <main id="content" className={styles.hero}>
+        <header className={styles.topRow}>
+          <Logo />
+          <Navigation />
+        </header>
+
+        <div className={styles.center}>
+          <span aria-hidden="true" className={styles.scrim} />
+          <GrevenTitle />
         </div>
 
-        <nav className={styles.nav} aria-label="Navigation principale">
-          <Link href="/" className={styles.navLink} aria-current="page">
-            Accueil
-          </Link>
-          {NEURON_SECTIONS.map((section) => (
-            <Link key={section.id} href={section.href} className={styles.navLink}>
-              {section.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
+        <footer className={styles.footerRow}>
+          <Eyebrow className={styles.intro}>
+            Explorer
+            <br />
+            mon univers
+          </Eyebrow>
+        </footer>
+      </main>
 
-      <h1 className={styles.title}>
-        <span>GRE</span>
-        <span aria-hidden="true" className={styles.networkSlot} />
-        <span>VEN</span>
-      </h1>
-
-      <div className={styles.footerRow}>
-        <p className={styles.intro}>
-          Explorer
-          <br />
-          mon univers
-        </p>
-        <p className={styles.kanjiRow} aria-hidden="true">
-          静·遠·質·道·特
-        </p>
-      </div>
-    </main>
+      <NeuronCard />
+    </>
   );
 }

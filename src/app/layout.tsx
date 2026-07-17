@@ -1,18 +1,15 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Noto_Sans_JP, Noto_Serif_JP } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
+import { NeuralBackdrop } from '@/scenes/NeuralCanvas/NeuralBackdrop';
+import { SmoothScroll } from '@/components/layout/SmoothScroll';
 import '@/styles/globals.css';
 
-const notoSerifJp = Noto_Serif_JP({
+// High-contrast display serif for the GREVEN wordmark and Latin headings.
+const playfair = Playfair_Display({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
-  variable: '--font-noto-serif-jp',
-  display: 'swap',
-});
-
-const notoSansJp = Noto_Sans_JP({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  variable: '--font-noto-sans-jp',
+  style: ['normal', 'italic'],
+  variable: '--font-playfair',
   display: 'swap',
 });
 
@@ -28,7 +25,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'GREVEN — AI Research Portfolio',
+    default: 'GREVEN — ML Research Portfolio',
     template: '%s — GREVEN',
   },
   description:
@@ -44,7 +41,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: 'website',
-    title: 'GREVEN — AI Research Portfolio',
+    title: 'GREVEN — ML Research Portfolio',
     description:
       'Une exploration à l’intérieur d’un réseau de neurones : recherche en Machine Learning et intelligence artificielle.',
     siteName: 'GREVEN',
@@ -52,7 +49,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'GREVEN — AI Research Portfolio',
+    title: 'GREVEN — ML Research Portfolio',
     description:
       'Portfolio de recherche d’Evan Greven — Machine Learning, réseaux de neurones et IA.',
   },
@@ -65,12 +62,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${notoSerifJp.variable} ${notoSansJp.variable} ${inter.variable}`}>
+    <html lang="fr" className={`${playfair.variable} ${inter.variable}`}>
       <body>
         <a href="#content" className="sr-only">
           Aller au contenu principal
         </a>
-        {children}
+        <SmoothScroll />
+        <NeuralBackdrop />
+        <div className="content-layer">{children}</div>
       </body>
     </html>
   );

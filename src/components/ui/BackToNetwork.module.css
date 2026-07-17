@@ -1,0 +1,22 @@
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--fs-small);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.back svg {
+  transition: transform var(--dur-medium) var(--ease-editorial);
+}
+
+.back:hover {
+  color: var(--text-primary);
+}
+
+.back:hover svg {
+  transform: translateX(-3px);
+}

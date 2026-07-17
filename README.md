@@ -33,16 +33,16 @@ npm run dev                  # http://localhost:3000
 
 ## Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start the dev server |
-| `npm run build` | Production build |
-| `npm run start` | Serve the production build |
-| `npm run lint` | ESLint (next config) |
-| `npm run typecheck` | `tsc --noEmit` (strict) |
-| `npm run test` | Unit tests (Vitest) |
-| `npm run test:e2e` | End-to-end tests (Playwright) |
-| `npm run format` | Prettier write |
+| Script              | Description                   |
+| ------------------- | ----------------------------- |
+| `npm run dev`       | Start the dev server          |
+| `npm run build`     | Production build              |
+| `npm run start`     | Serve the production build    |
+| `npm run lint`      | ESLint (next config)          |
+| `npm run typecheck` | `tsc --noEmit` (strict)       |
+| `npm run test`      | Unit tests (Vitest)           |
+| `npm run test:e2e`  | End-to-end tests (Playwright) |
+| `npm run format`    | Prettier write                |
 
 Before any important push: `npm run lint && npm run typecheck && npm run build`.
 

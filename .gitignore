@@ -40,3 +40,13 @@ next-env.d.ts
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# Large source 3D assets (optimized versions committed under public/models/)
+/Meshy_AI_*.glb
+/neuronne_sans_liaison*.glb
+/Neuroone_sans_laison*.glb
+/soma_*.glb
+
+# Visual-verification helpers (local screenshot loop)
+/shot.mjs
+/current-render.png

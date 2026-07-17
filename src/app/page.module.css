@@ -4,85 +4,82 @@
   padding: var(--page-margin);
   display: grid;
   grid-template-rows: auto 1fr auto;
+  gap: var(--space-8);
   overflow: hidden;
 }
 
+/* Subtle top & bottom vignette so the chrome stays legible over the network,
+   without darkening the luminous centre. */
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 28vh;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(23, 16, 9, 0.6), transparent);
+}
+
+.hero::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(23, 16, 9, 0.6), transparent);
+}
+
+.center,
+.footerRow {
+  position: relative;
+  z-index: 2;
+}
+
 .topRow {
+  /* Above the footer: this header hosts the mobile menu overlay, whose
+     z-index resolves INSIDE this stacking context — as a sibling context
+     equal to the footer's, DOM order let the footer swallow menu taps. */
+  position: relative;
+  z-index: var(--z-nav);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-6);
 }
 
-.brand {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.wordmark {
-  font-family: var(--font-serif);
-  font-size: var(--fs-h3);
-  letter-spacing: 0.32em;
-  color: var(--text-primary);
-}
-
-.tagline {
-  font-size: var(--fs-eyebrow);
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.nav {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  text-align: right;
-}
-
-.navLink {
-  font-size: var(--fs-small);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  transition: color var(--dur-fast) var(--ease-standard);
-}
-
-.navLink:hover {
-  color: var(--text-primary);
-}
-
-.title {
-  align-self: center;
-  justify-self: center;
+/* Absolutely centred on the viewport so the wordmark sits exactly at the level
+   of the central hub neuron (world origin → screen centre). */
+.center {
+  position: absolute;
+  top: 50%;
+  left: var(--page-margin);
+  right: var(--page-margin);
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
-  gap: clamp(3rem, 12vw, 12rem);
-  font-family: var(--font-serif);
-  font-size: var(--fs-display);
-  font-weight: 500;
-  letter-spacing: var(--tracking-title);
-  color: var(--text-primary);
-  line-height: 1;
-  /* The gap between GRE and VEN is where the neural network will live. */
+  justify-content: center;
+  z-index: 2;
 }
 
-/* Placeholder mark for the neural network, replaced by the WebGL scene. */
-.networkSlot {
+/* Soft, blurred scrim directly behind the wordmark to guarantee legibility
+   over the moving network — fades out so branches remain visible around it. */
+.scrim {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: clamp(120px, 22vw, 300px);
-  height: clamp(120px, 22vw, 300px);
-  border-radius: 50%;
+  width: min(92vw, 1150px);
+  height: min(52vh, 400px);
+  pointer-events: none;
   background: radial-gradient(
-    circle,
-    rgba(242, 208, 167, 0.14),
-    rgba(101, 55, 31, 0.06) 45%,
-    transparent 70%
+    ellipse at center,
+    rgba(27, 19, 12, 0.42),
+    rgba(27, 19, 12, 0.2) 48%,
+    transparent 72%
   );
+  filter: blur(28px);
 }
 
 .footerRow {
@@ -92,28 +89,15 @@
   gap: var(--space-6);
 }
 
+/* Invisible right-hand counterweight keeping the scroll hint centred. */
+.footerRow::after {
+  content: '';
+  flex: 1;
+}
+
 .intro {
-  font-size: var(--fs-eyebrow);
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
+  flex: 1;
   color: var(--text-secondary);
   line-height: 1.9;
 }
 
-.kanjiRow {
-  font-family: var(--font-jp);
-  font-size: var(--fs-body);
-  letter-spacing: 0.5em;
-  color: var(--text-muted);
-}
-
-@media (max-width: 720px) {
-  .nav {
-    display: none;
-  }
-
-  .title {
-    flex-direction: column;
-    gap: clamp(6rem, 30vw, 10rem);
-  }
-}

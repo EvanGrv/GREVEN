@@ -15,6 +15,12 @@ html {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* No accidental horizontal scroll on any device. */
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
 }
 
 body {
@@ -25,10 +31,29 @@ body {
   font-size: var(--fs-body);
   line-height: var(--leading-body);
   /* Subtle warm minerality — never a flat black. */
-  background-image:
-    radial-gradient(120% 120% at 50% 20%, rgba(101, 55, 31, 0.1), transparent 55%),
-    radial-gradient(100% 80% at 80% 100%, rgba(50, 29, 28, 0.35), transparent 60%);
+  background-image: radial-gradient(120% 120% at 50% 20%, rgba(85, 57, 39, 0.12), transparent 55%),
+    radial-gradient(100% 80% at 80% 100%, rgba(51, 35, 26, 0.35), transparent 60%);
   background-attachment: fixed;
+}
+
+/* HTML content sits above the persistent WebGL backdrop. */
+.content-layer {
+  position: relative;
+  z-index: var(--z-content);
+}
+
+/* Lenis smooth scroll. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
 }
 
 h1,
